@@ -1,5 +1,4 @@
-def main() -> None:
-    pass
+from barkoder.app import run
 
 if __name__ == "__main__":
-    main()
+    run()
