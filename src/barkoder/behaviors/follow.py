@@ -1,5 +1,6 @@
 import random
 import logging
+import time
 from barkoder.behaviors.base import Behavior, AnimationRequest
 from barkoder.tracker import CursorContext
 
@@ -29,8 +30,14 @@ class FollowBehavior(Behavior):
         self._max_run_s = max_run_s
         self._sm = sm
         self._following = False  # hysteresis: keeps follow active until very close
+        self._suppressed_until: float = 0.0
+
+    def suppress(self, duration_s: float) -> None:
+        self._suppressed_until = time.monotonic() + duration_s
 
     def should_enter(self, ctx: CursorContext) -> bool:
+        if time.monotonic() < self._suppressed_until:
+            return False
         cursor_active = ctx.cursor_idle_seconds < self._window
         if self._following:
             # exit only when very close (40% of near threshold) OR cursor settled

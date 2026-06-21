@@ -7,33 +7,41 @@ class PantBehavior(Behavior):
     priority = 1
     name = "pant"
 
-    def __init__(self, sm, min_cycles: int, max_cycles: int) -> None:  # sm: StateMachine or BehaviorTree
-        self._sm = sm
-        self._min_cycles = min_cycles
-        self._max_cycles = max_cycles
-        self._cycles_remaining = 0
-        self._exhausted = False
+    _MIN_INTERVAL = 20.0
+    _MAX_INTERVAL = 40.0
+    _MIN_CYCLES = 2
+    _MAX_CYCLES = 4
+    _RUN_BEFORE_PANT = 1.0  # seconds of running required before pant fires
+
+    def __init__(self) -> None:
+        self._done = False
+        self._direction = "east"
+        self._interval_remaining: float = random.uniform(self._MIN_INTERVAL, self._MAX_INTERVAL)
+        self._cycles_done: int = 0
+        self._target_cycles: int = self._MIN_CYCLES
 
     def should_enter(self, ctx: CursorContext) -> bool:
-        if self._exhausted:
+        if self._done:
             return False
-        return ctx.running_seconds >= ctx.run_threshold
+        self._interval_remaining -= 0.016
+        if self._interval_remaining > 0.0:
+            return False
+        return ctx.running_seconds >= self._RUN_BEFORE_PANT
 
     def on_enter(self, ctx: CursorContext) -> None:
-        self._cycles_remaining = random.randint(self._min_cycles, self._max_cycles)
-        self._exhausted = False
+        self._done = False
+        self._direction = ctx.move_direction
+        self._cycles_done = 0
+        self._target_cycles = random.randint(self._MIN_CYCLES, self._MAX_CYCLES)
 
     def on_exit(self, ctx: CursorContext) -> None:
-        self._exhausted = False
-
-    def _notify_cycle_done(self) -> None:
-        self._cycles_remaining -= 1
-        if self._cycles_remaining <= 0:
-            self._exhausted = True
-            self._sm.reset_running_time()
+        self._done = False
+        self._interval_remaining = random.uniform(self._MIN_INTERVAL, self._MAX_INTERVAL)
 
     def update(self, ctx: CursorContext) -> tuple[AnimationRequest, float]:
-        return AnimationRequest("Pant", ctx.move_direction), 0.0
+        return AnimationRequest("Pant", self._direction), 0.0
 
     def notify_animation_finished(self) -> None:
-        self._notify_cycle_done()
+        self._cycles_done += 1
+        if self._cycles_done >= self._target_cycles:
+            self._done = True
