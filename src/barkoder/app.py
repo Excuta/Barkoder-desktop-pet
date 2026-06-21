@@ -287,8 +287,9 @@ def run() -> None:
             except KeyError:
                 log.error("missing animation frames: %s/%s", req.animation, req.direction)
                 frames = loader.get_frames("Idle", "east")
-                is_loop = True
                 anim_fps = fps.Idle
+                # Keep is_loop unchanged: non-looping anims (Jump/Pant/Bark) need
+                # is_finished to fire so completion handlers can deactivate them.
             player.set_animation(frames, fps=float(anim_fps), loop=is_loop)
 
         player.advance(delta_s)
