@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 class AnimationRequest:
     animation: str
     direction: str
+    y_offset: float = 0.0
 
 
 class Behavior(ABC):
