@@ -2,8 +2,8 @@ import sys
 import time
 from pathlib import Path
 
-from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from barkoder.animation import AnimationPlayer, AssetLoader
@@ -57,15 +57,16 @@ def run() -> None:
     # Audio controller
     audio = AudioController(ASSETS_DIR / "bark.wav")
 
-    # System tray — prefer ICO (multi-size) for best OS rendering
-    ico_path = ASSETS_DIR / "icon.ico"
+    # System tray — add pixmap at every size Windows may request
     png_path = ASSETS_DIR / "sitting" / "rotations" / "south.png"
-    if ico_path.exists():
-        tray_icon = QIcon(str(ico_path))
-    elif png_path.exists():
-        tray_icon = QIcon(str(png_path))
-    else:
-        tray_icon = QIcon()
+    tray_icon = QIcon()
+    if png_path.exists():
+        src = QPixmap(str(png_path))
+        for sz in [16, 20, 24, 32, 40, 48, 64, 128, 256]:
+            tray_icon.addPixmap(
+                src.scaled(sz, sz, Qt.AspectRatioMode.KeepAspectRatio,
+                           Qt.TransformationMode.SmoothTransformation)
+            )
     startup_mgr = StartupManager("Barkoder")
 
     tray = QSystemTrayIcon(tray_icon, parent=app)
