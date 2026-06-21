@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from barkoder.animation import AnimationPlayer, AssetLoader
 from barkoder.audio import AudioController
+from barkoder.behaviors.base import AnimationRequest
 from barkoder.behaviors.idle import IdleBehavior
 from barkoder.behaviors.follow import FollowBehavior
 from barkoder.behaviors.pant import PantBehavior
@@ -44,6 +45,17 @@ def _config_path() -> Path:
 
 ASSETS_DIR = _resource_dir() / "assets"
 CONFIG_PATH = _config_path()
+
+_DEV_ANIMS = [
+    ("Walk east",  ("Walk", "east")),
+    ("Run east",   ("Run",  "east")),
+    ("Run north",  ("Run",  "north")),
+    ("Bark east",  ("Bark", "east")),
+    ("Idle east",  ("Idle", "east")),
+    ("Pant east",  ("Pant", "east")),
+    ("Sit north",  ("Sit",  "north")),
+    ("Rest east",  ("Rest", "east")),
+]
 
 
 def _detect_taskbar_height(screen) -> int:
@@ -98,8 +110,11 @@ def run() -> None:
     window.move_to(dog_x, dog_y)
     window.show()
 
-    # Audio controller
-    audio = AudioController(ASSETS_DIR / "bark.wav")
+    # Audio controller — discovers all WAV files in assets/audio/ (recursive)
+    bark_sounds = sorted((ASSETS_DIR / "audio").glob("**/*.wav"))
+    log.info("audio: found %d wav file(s): %s", len(bark_sounds),
+             [p.name for p in bark_sounds])
+    audio = AudioController(bark_sounds)
 
     # Load icon once — used for app icon, tray, and window
     ico_path = ASSETS_DIR / "icon.ico"
@@ -133,6 +148,20 @@ def run() -> None:
 
     boot_action.toggled.connect(toggle_boot)
     menu.addSeparator()
+    dev_toggle = menu.addAction("Dev Mode")
+    dev_toggle.setCheckable(True)
+    dev_toggle.setChecked(False)
+
+    dev_anim_menu = menu.addMenu("▶ Trigger Animation")
+    dev_anim_menu.setEnabled(False)
+    for label, (anim, direction) in _DEV_ANIMS:
+        act = dev_anim_menu.addAction(label)
+        act.triggered.connect(
+            lambda checked, a=anim, d=direction: trigger_dev_animation(a, d)
+        )
+    dev_toggle.toggled.connect(lambda checked: dev_anim_menu.setEnabled(checked))
+
+    menu.addSeparator()
     quit_action = menu.addAction("Quit")
     quit_action.triggered.connect(app.quit)
     tray.setContextMenu(menu)
@@ -154,8 +183,8 @@ def run() -> None:
         sm=None,
     )
     idle_b = IdleBehavior()
-    pant_b = PantBehavior(sm=None, min_cycles=pa.min_cycles, max_cycles=pa.max_cycles)
-    bark_walk_b = BarkWalkBehavior(near_x_px=th.near_x_px, bark_active_window_s=th.bark_active_window_s, audio=audio)
+    pant_b = PantBehavior()
+    bark_walk_b = BarkWalkBehavior(near_x_px=th.near_x_px, bark_active_window_s=th.bark_active_window_s, audio=audio, walk_speed_px=mv.walk_speed_px)
     wander_b = WanderBehavior(
         wander_threshold_s=th.wander_threshold_s,
         walk_speed_px=mv.walk_speed_px,
@@ -167,25 +196,17 @@ def run() -> None:
     )
     idle_sit_b = IdleSitBehavior(sit_threshold_s=th.sit_threshold_s)
     rest_b = RestBehavior(rest_threshold_s=th.rest_threshold_s)
-    jump_b = JumpBehavior(trigger_chance_per_s=0.05)
-
-    # Synthesize jump animation from existing Sit + Run-north frames
-    for _dir in ("east", "west"):
-        _sit = loader.get_frames("Sit", _dir)
-        _run_up = loader.get_frames("Run", "north")
-        loader.register_synthetic("Jump", _dir, [
-            _sit[0], _run_up[0], _run_up[2], _run_up[4], _sit[0],
-        ])
+    jump_b = JumpBehavior(screen_height=geo.height(), near_x_px=th.near_x_px)
 
     # Build behavior tree
     arrival_sit_leaf = BTLeaf(arrival_sit_b)
     bt = BehaviorTree(
         BTSelector([
-            BTLeaf(pant_b),                                     # 1. exhausted
-            BTCooldown(BTLeaf(bark_walk_b), 6.0),               # 2. greet cursor
-            arrival_sit_leaf,                                   # 3. cursor arrived
-            BTLeaf(follow_b),                                   # 4. chase cursor
-            BTCooldown(BTLeaf(jump_b), 30.0),                   # 5. jump (experimental)
+            BTLeaf(pant_b),                                     # 1. periodic pant
+            BTCooldown(BTLeaf(bark_walk_b), 12.0),               # 2. greet cursor (once per 6 s)
+            BTLeaf(jump_b),                                     # 3. jump on arrival (self-managed)
+            arrival_sit_leaf,                                   # 4. cursor arrived
+            BTLeaf(follow_b),                                   # 5. chase cursor
             BTRandomDwell(BTLeaf(wander_b), 5.0, 10.0),         # 6. wander
             BTRandomDwell(BTLeaf(idle_sit_b), 5.0, 15.0),       # 7. sit
             BTRandomDwell(BTLeaf(rest_b), 10.0, 20.0),          # 8. rest
@@ -193,39 +214,69 @@ def run() -> None:
         ])
     )
     follow_b._sm = bt
-    pant_b._sm = bt
 
     tracker = CursorTracker(move_threshold_px=th.cursor_move_threshold_px)
     last_tick = time.monotonic()
     fps = settings.animation_fps
     current_anim: tuple[str, str] = ("", "")
+    _dev_override: tuple[str, str] | None = None
+    _dev_override_until: float = 0.0
+    _dev_bark_active: bool = False  # True while a dev-menu bark is playing
+
+    def trigger_dev_animation(anim: str, direction: str) -> None:
+        nonlocal _dev_override, _dev_override_until, current_anim, _dev_bark_active
+        _dev_override = (anim, direction)
+        _dev_override_until = time.monotonic() + 1.0
+        current_anim = ("", "")
+        _dev_bark_active = (anim == "Bark")
+        if anim == "Bark":
+            audio.play()
 
     def tick() -> None:
-        nonlocal last_tick, dog_x, current_anim
+        nonlocal last_tick, dog_x, current_anim, _dev_override, _dev_bark_active
+        try:
+            _tick_body()
+        except Exception:
+            log.exception("tick error")
+
+    def _tick_body() -> None:
+        nonlocal last_tick, dog_x, current_anim, _dev_override, _dev_bark_active
         now = time.monotonic()
         delta_s = min(now - last_tick, 0.1)
         last_tick = now
 
         ctx = tracker.compute(dog_x, dog_y, delta_s,
                               bt.running_seconds, bt._run_threshold)
-        req, delta_x = bt.tick(ctx, delta_s)
+
+        if _dev_override and now < _dev_override_until:
+            req = AnimationRequest(*_dev_override)
+            delta_x = 0.0
+        else:
+            if _dev_override:
+                _dev_override = None
+                _dev_bark_active = False
+                current_anim = ("", "")
+            req, delta_x = bt.tick(ctx, delta_s)
 
         if req.animation == "Run":
             bt.add_running_time(delta_s)
 
         dog_x = max(0.0, min(float(geo.width() - DOG_SIZE), dog_x + delta_x))
-        window.move_to(dog_x, dog_y)
+        window.move_to(dog_x, dog_y + req.y_offset)
 
         anim_key = (req.animation, req.direction)
         if anim_key != current_anim:
             current_anim = anim_key
             anim_fps = getattr(fps, req.animation, fps.Idle)
             is_loop = req.animation not in ("Pant", "Bark", "Jump")
-            player.set_animation(
-                loader.get_frames(req.animation, req.direction),
-                fps=float(anim_fps),
-                loop=is_loop,
-            )
+            try:
+                frames = loader.get_frames(req.animation, req.direction)
+            except KeyError:
+                log.error("missing animation frames: %s/%s", req.animation, req.direction)
+                frames = loader.get_frames("Idle", "east")
+                is_loop = True
+                anim_fps = fps.Idle
+            player.set_animation(frames, fps=float(anim_fps), loop=is_loop)
 
         player.advance(delta_s)
 
@@ -233,27 +284,25 @@ def run() -> None:
         if req.animation == "Pant" and player.is_finished:
             player.reset_finished()
             pant_b.notify_animation_finished()
-            if pant_b._exhausted:
-                # Force re-evaluation next tick by clearing the one-shot state
+            if pant_b._done:
                 current_anim = ("", "")
 
         # Handle bark animation cycle completion
         if req.animation == "Bark" and player.is_finished:
             player.reset_finished()
-            bark_walk_b.notify_animation_finished()
+            if not _dev_bark_active:
+                bark_walk_b.notify_animation_finished()
             current_anim = ("", "")  # force re-evaluation
 
-        # Handle jump animation completion
-        if req.animation == "Jump" and player.is_finished:
-            player.reset_finished()
-            jump_b.notify_animation_finished()
-            current_anim = ("", "")
-
-        # Handle arrival-sit hold completion
-        if req.animation == "Sit" and arrival_sit_leaf._active:
+        # Handle arrival-sit hold completion.
+        # Guard against jump's pre/post-sit: jump._active means jump won this tick.
+        if (req.animation == "Sit"
+                and arrival_sit_leaf._active
+                and not jump_b._active):
             if arrival_sit_b.hold_done:
                 arrival_sit_b._triggered = True
                 wander_b.force_start()
+                follow_b.suppress(3.0)
                 current_anim = ("", "")
 
         frame = player.current_frame

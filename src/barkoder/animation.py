@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-_PANT_FOLDER = "Dog_is_panting_catching_its_breath._two_puffs_from"
+_PANT_FOLDER = "Dog_should_look_tired_catching_its_breath_with_a_p"
 
 
 class AnimationPlayer:
@@ -71,9 +71,12 @@ class AssetLoader:
                 key = "Pant" if raw_name == _PANT_FOLDER else raw_name
                 self._frames.setdefault(key, {})
                 for direction, frame_paths in directions.items():
-                    self._frames[key][direction] = [
-                        QPixmap_cls(str(assets_dir / p)) for p in frame_paths
-                    ]
+                    # Normalize "west-a1019c9d" → "west" (strip AI generation hash suffixes)
+                    norm_dir = direction.split("-")[0]
+                    if norm_dir not in self._frames[key]:  # first occurrence wins
+                        self._frames[key][norm_dir] = [
+                            QPixmap_cls(str(assets_dir / p)) for p in frame_paths
+                        ]
 
             # Load rotation stills as single-frame "Sit" animation
             if folder == "sitting":
