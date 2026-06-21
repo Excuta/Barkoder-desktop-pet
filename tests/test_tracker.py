@@ -52,30 +52,28 @@ def test_cursor_context_horizontal_distance():
 
 def test_tracker_accumulates_idle_when_cursor_still():
     tracker = CursorTracker(move_threshold_px=5.0)
-    tracker._last_cursor_x = 100.0
-    tracker._last_cursor_y = 100.0
+    tracker._settled_x = 100.0
+    tracker._settled_y = 100.0
     tracker._cursor_idle_seconds = 0.0
 
-    # Simulate cursor staying at (100, 100)
+    # Simulate cursor staying at settled position
     tracker._cursor_idle_seconds += 0.016
     tracker._cursor_idle_seconds += 0.016
     assert tracker._cursor_idle_seconds == pytest.approx(0.032)
 
 
 def test_tracker_resets_idle_when_cursor_moves():
+    import math
     tracker = CursorTracker(move_threshold_px=5.0)
-    tracker._last_cursor_x = 100.0
-    tracker._last_cursor_y = 100.0
+    tracker._settled_x = 100.0
+    tracker._settled_y = 100.0
     tracker._cursor_idle_seconds = 5.0
 
-    # Simulate a move exceeding threshold
+    # Simulate cursor leaving the deadzone
     new_x, new_y = 200.0, 200.0
-    dx = new_x - tracker._last_cursor_x
-    dy = new_y - tracker._last_cursor_y
-    import math
-    if math.hypot(dx, dy) > tracker._move_threshold_px:
+    if math.hypot(new_x - tracker._settled_x, new_y - tracker._settled_y) > tracker._deadzone_px:
         tracker._cursor_idle_seconds = 0.0
-        tracker._last_cursor_x = new_x
-        tracker._last_cursor_y = new_y
+        tracker._settled_x = new_x
+        tracker._settled_y = new_y
 
     assert tracker._cursor_idle_seconds == 0.0

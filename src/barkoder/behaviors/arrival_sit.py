@@ -19,6 +19,9 @@ class ArrivalSitBehavior(Behavior):
 
     def should_enter(self, ctx: CursorContext) -> bool:
         if self._triggered:
+            # Re-arm once cursor is genuinely far away (prevents instant re-entry)
+            if ctx.horizontal_distance > self._arrival_px * 2:
+                self._triggered = False
             return False
         return ctx.horizontal_distance < self._arrival_px
 
@@ -28,7 +31,7 @@ class ArrivalSitBehavior(Behavior):
         _log.info("arrival_sit: hold started (dist=%.0fpx)", ctx.horizontal_distance)
 
     def on_exit(self, ctx: CursorContext) -> None:
-        self._triggered = False
+        pass  # _triggered persists until cursor moves away (checked in should_enter)
 
     def update(self, ctx: CursorContext) -> tuple[AnimationRequest, float]:
         self._hold_elapsed += 0.016

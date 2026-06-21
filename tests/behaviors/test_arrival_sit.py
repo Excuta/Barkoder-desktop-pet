@@ -39,8 +39,23 @@ def test_arrival_returns_sit_animation():
     assert delta == 0.0
 
 
-def test_arrival_resets_on_exit():
+def test_triggered_persists_through_on_exit():
+    # _triggered must NOT reset in on_exit (old bug: caused immediate re-entry loop)
     b = ArrivalSitBehavior(arrival_x_px=50.0, sit_hold_seconds=1.5)
     b._triggered = True
     b.on_exit(ctx())
+    assert b._triggered  # persists — will only clear via should_enter when cursor is far
+
+
+def test_triggered_resets_when_cursor_far_away():
+    # should_enter resets _triggered when horizontal_distance > arrival_px * 2
+    b = ArrivalSitBehavior(arrival_x_px=50.0, sit_hold_seconds=1.5)
+    b._triggered = True
+    # At 90px (< arrival_px*2=100), _triggered stays set, should_enter returns False
+    assert not b.should_enter(ctx(horizontal_distance=90))
+    assert b._triggered
+    # At 110px (> arrival_px*2=100), _triggered resets, should_enter still returns False
+    assert not b.should_enter(ctx(horizontal_distance=110))
     assert not b._triggered
+    # Next call within arrival zone → can enter again
+    assert b.should_enter(ctx(horizontal_distance=30))

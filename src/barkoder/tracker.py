@@ -29,10 +29,12 @@ def compute_bark_direction(
 
 class CursorTracker:
     def __init__(self, move_threshold_px: float = 5.0) -> None:
-        self._move_threshold_px = move_threshold_px
+        self._deadzone_px = move_threshold_px
         pos = QCursor.pos()
-        self._last_cursor_x: float = float(pos.x())
-        self._last_cursor_y: float = float(pos.y())
+        # Track "settled" position — only updates when cursor leaves the deadzone.
+        # Jitter smaller than deadzone_px never resets cursor_idle_seconds.
+        self._settled_x: float = float(pos.x())
+        self._settled_y: float = float(pos.y())
         self._cursor_idle_seconds: float = 0.0
 
     def compute(
@@ -47,11 +49,11 @@ class CursorTracker:
         cx = float(pos.x())
         cy = float(pos.y())
 
-        moved = math.hypot(cx - self._last_cursor_x, cy - self._last_cursor_y)
-        if moved > self._move_threshold_px:
+        dist_from_settled = math.hypot(cx - self._settled_x, cy - self._settled_y)
+        if dist_from_settled > self._deadzone_px:
             self._cursor_idle_seconds = 0.0
-            self._last_cursor_x = cx
-            self._last_cursor_y = cy
+            self._settled_x = cx
+            self._settled_y = cy
         else:
             self._cursor_idle_seconds += delta_s
 

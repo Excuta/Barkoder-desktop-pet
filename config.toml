@@ -6,7 +6,7 @@ bark_active_window_s = 5.0
 wander_threshold_s   = 8.0
 sit_threshold_s      = 20.0
 sit_hold_seconds     = 2.5
-cursor_move_threshold_px = 12.0
+cursor_move_threshold_px = 30.0
 
 [panting]
 min_run_seconds = 7.0
