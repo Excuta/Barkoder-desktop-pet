@@ -11,6 +11,9 @@ class AnimationRequest:
 class Behavior(ABC):
     priority: int
     name: str
+    min_dwell_s: float = 0.0       # minimum time before a lower-priority behavior can preempt
+    max_dwell_s: float = 0.0       # random budget upper bound; 0 means use min_dwell_s exactly
+    exit_cooldown_s: float = 0.0   # seconds before this behavior can re-enter after exiting
 
     @abstractmethod
     def should_enter(self, ctx: "CursorContext") -> bool: ...  # noqa: F821
