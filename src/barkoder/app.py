@@ -11,6 +11,9 @@ from barkoder.behaviors.walk import WalkBehavior
 from barkoder.behaviors.run import RunBehavior
 from barkoder.behaviors.pant import PantBehavior
 from barkoder.behaviors.bark_walk import BarkWalkBehavior
+from barkoder.behaviors.wander import WanderBehavior
+from barkoder.behaviors.arrival_sit import ArrivalSitBehavior
+from barkoder.behaviors.idle_sit import IdleSitBehavior
 from barkoder.config import load_settings
 from barkoder.state_machine import StateMachine
 from barkoder.tracker import CursorTracker
@@ -55,7 +58,17 @@ def run() -> None:
     idle_b = IdleBehavior()
     pant_b = PantBehavior(sm=None, min_cycles=pa.min_cycles, max_cycles=pa.max_cycles)
     bark_walk_b = BarkWalkBehavior(near_x_px=th.near_x_px, bark_active_window_s=th.bark_active_window_s)
-    sm = StateMachine([idle_b, bark_walk_b, walk_b, pant_b, run_b])
+    wander_b = WanderBehavior(
+        wander_threshold_s=th.wander_threshold_s,
+        walk_speed_px=mv.walk_speed_px,
+        screen_width=geo.width(),
+    )
+    arrival_sit_b = ArrivalSitBehavior(
+        arrival_x_px=th.arrival_x_px,
+        sit_hold_seconds=th.sit_hold_seconds,
+    )
+    idle_sit_b = IdleSitBehavior(sit_threshold_s=th.sit_threshold_s)
+    sm = StateMachine([idle_b, bark_walk_b, walk_b, pant_b, run_b, wander_b, arrival_sit_b, idle_sit_b])
     run_b._sm = sm  # inject after construction
     pant_b._sm = sm  # inject after construction
 
@@ -103,6 +116,12 @@ def run() -> None:
             player.reset_finished()
             bark_walk_b.notify_animation_finished()
             current_anim = ("", "")  # force re-evaluation
+
+        # Handle arrival-sit hold completion
+        if req.animation == "Sit" and sm.current_behavior is arrival_sit_b:
+            if arrival_sit_b.hold_done:
+                arrival_sit_b._triggered = True  # prevent immediate re-entry
+                current_anim = ("", "")  # force StateMachine re-evaluation next tick
 
         frame = player.current_frame
         if frame is not None:
