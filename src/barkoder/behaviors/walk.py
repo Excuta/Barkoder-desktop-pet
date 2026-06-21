@@ -5,6 +5,9 @@ from barkoder.tracker import CursorContext
 class WalkBehavior(Behavior):
     priority = 5
     name = "walk"
+    min_dwell_s = 3.0
+    max_dwell_s = 8.0
+    exit_cooldown_s = 1.0
 
     def __init__(self, near_x_px: float, walk_speed_px: float) -> None:
         self._near = near_x_px

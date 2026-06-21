@@ -192,8 +192,9 @@ def run() -> None:
         # Handle arrival-sit hold completion
         if req.animation == "Sit" and sm.current_behavior is arrival_sit_b:
             if arrival_sit_b.hold_done:
-                arrival_sit_b._triggered = True  # prevent immediate re-entry
-                current_anim = ("", "")  # force StateMachine re-evaluation next tick
+                arrival_sit_b._triggered = True
+                wander_b.force_start()
+                current_anim = ("", "")
 
         frame = player.current_frame
         if frame is not None:
