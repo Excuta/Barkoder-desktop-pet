@@ -7,6 +7,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from barkoder.animation import AnimationPlayer, AssetLoader
+from barkoder.audio import AudioController
 from barkoder.behaviors.idle import IdleBehavior
 from barkoder.behaviors.walk import WalkBehavior
 from barkoder.behaviors.run import RunBehavior
@@ -48,6 +49,9 @@ def run() -> None:
     window.move_to(dog_x, dog_y)
     window.show()
 
+    # Audio controller
+    audio = AudioController(ASSETS_DIR / "bark.wav")
+
     # System tray
     tray_icon_path = (
         ASSETS_DIR
@@ -64,6 +68,11 @@ def run() -> None:
     mute_action = menu.addAction("Mute")
     mute_action.setCheckable(True)
     mute_action.setChecked(False)
+
+    def toggle_mute(checked: bool) -> None:
+        audio.toggle_mute()
+
+    mute_action.toggled.connect(toggle_mute)
 
     boot_action = menu.addAction("Start on Boot")
     boot_action.setCheckable(True)
@@ -93,7 +102,7 @@ def run() -> None:
     walk_b = WalkBehavior(near_x_px=th.near_x_px, walk_speed_px=mv.walk_speed_px)
     idle_b = IdleBehavior()
     pant_b = PantBehavior(sm=None, min_cycles=pa.min_cycles, max_cycles=pa.max_cycles)
-    bark_walk_b = BarkWalkBehavior(near_x_px=th.near_x_px, bark_active_window_s=th.bark_active_window_s)
+    bark_walk_b = BarkWalkBehavior(near_x_px=th.near_x_px, bark_active_window_s=th.bark_active_window_s, audio=audio)
     wander_b = WanderBehavior(
         wander_threshold_s=th.wander_threshold_s,
         walk_speed_px=mv.walk_speed_px,

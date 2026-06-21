@@ -8,11 +8,13 @@ class BarkWalkBehavior(Behavior):
     priority = 2
     name = "bark_walk"
 
-    def __init__(self, near_x_px: float, bark_active_window_s: float) -> None:
+    def __init__(self, near_x_px: float, bark_active_window_s: float, audio=None) -> None:
         self._near = near_x_px
         self._active_window = bark_active_window_s
         self._barking = True   # True = show bark, False = show walk step
         self._walk_ticks = 0
+        self._audio = audio
+        self._bark_sound_played = False
 
     def should_enter(self, ctx: CursorContext) -> bool:
         return (
@@ -23,19 +25,26 @@ class BarkWalkBehavior(Behavior):
     def on_enter(self, ctx: CursorContext) -> None:
         self._barking = True
         self._walk_ticks = 0
+        self._bark_sound_played = False
 
     def notify_animation_finished(self) -> None:
         self._barking = False
         self._walk_ticks = _WALK_STEPS
+        self._bark_sound_played = False
 
     def update(self, ctx: CursorContext) -> tuple[AnimationRequest, float]:
         if self._barking:
+            if self._audio and not self._bark_sound_played:
+                self._audio.play()
+                self._bark_sound_played = True
             return AnimationRequest("Bark", ctx.bark_direction_4), 0.0
         if self._walk_ticks > 0:
             self._walk_ticks -= 1
             delta = 2.5 if ctx.move_direction == "east" else -2.5
             if self._walk_ticks == 0:
                 self._barking = True
+                self._bark_sound_played = False
             return AnimationRequest("Walk", ctx.move_direction), delta
         self._barking = True
+        self._bark_sound_played = False
         return AnimationRequest("Bark", ctx.bark_direction_4), 0.0
