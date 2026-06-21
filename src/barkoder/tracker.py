@@ -57,9 +57,11 @@ class CursorTracker:
         else:
             self._cursor_idle_seconds += delta_s
 
-        h_dist = abs(cx - dog_x)
-        move_dir = "east" if cx > dog_x else "west"
-        bark_dir = compute_bark_direction(cx, cy, dog_x, dog_y)
+        # Use settled position for all behavior decisions — prevents boundary oscillation
+        # when raw cursor jitter crosses a threshold while "resting" within the deadzone.
+        h_dist = abs(self._settled_x - dog_x)
+        move_dir = "east" if self._settled_x > dog_x else "west"
+        bark_dir = compute_bark_direction(self._settled_x, self._settled_y, dog_x, dog_y)
 
         return CursorContext(
             cursor_x=cx,
