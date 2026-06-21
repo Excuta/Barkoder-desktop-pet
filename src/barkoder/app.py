@@ -9,6 +9,7 @@ from barkoder.animation import AnimationPlayer, AssetLoader
 from barkoder.behaviors.idle import IdleBehavior
 from barkoder.behaviors.walk import WalkBehavior
 from barkoder.behaviors.run import RunBehavior
+from barkoder.behaviors.pant import PantBehavior
 from barkoder.config import load_settings
 from barkoder.state_machine import StateMachine
 from barkoder.tracker import CursorTracker
@@ -51,8 +52,10 @@ def run() -> None:
     )
     walk_b = WalkBehavior(near_x_px=th.near_x_px, walk_speed_px=mv.walk_speed_px)
     idle_b = IdleBehavior()
-    sm = StateMachine([idle_b, walk_b, run_b])
+    pant_b = PantBehavior(sm=None, min_cycles=pa.min_cycles, max_cycles=pa.max_cycles)
+    sm = StateMachine([idle_b, walk_b, pant_b, run_b])
     run_b._sm = sm  # inject after construction
+    pant_b._sm = sm  # inject after construction
 
     tracker = CursorTracker(move_threshold_px=th.cursor_move_threshold_px)
     last_tick = time.monotonic()
@@ -84,6 +87,15 @@ def run() -> None:
             )
 
         player.advance(delta_s)
+
+        # Handle pant animation cycle completion
+        if req.animation == "Pant" and player.is_finished:
+            player.reset_finished()
+            pant_b.notify_animation_finished()
+            if pant_b._exhausted:
+                # Force re-evaluation next tick by clearing the one-shot state
+                current_anim = ("", "")
+
         frame = player.current_frame
         if frame is not None:
             window.set_frame(frame)
