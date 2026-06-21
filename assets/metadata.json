@@ -1,0 +1,170 @@
+{
+  "group_id": "c3a628e7-5e56-4f90-a1e8-97a5263fe86e",
+  "states": [
+    {
+      "character": {
+        "id": "aa784bbd-cd08-4b7b-83bc-2d69e2bf9081",
+        "name": "Create a dog, with running, idle, panting, and able to look in 180 degrees split in 6 steps",
+        "prompt": "Create a dog, with running, idle, panting, and able to look in 180 degrees split in 6 steps",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "dog",
+        "directions": 4,
+        "view": "side",
+        "created_at": "2026-06-21T11:26:19.828486+00:00"
+      },
+      "folder": "Create_a_dog_with_running_idle_panting_and_able_to",
+      "frames": {
+        "rotations": {
+          "south": "Create_a_dog_with_running_idle_panting_and_able_to/rotations/south.png",
+          "west": "Create_a_dog_with_running_idle_panting_and_able_to/rotations/west.png",
+          "east": "Create_a_dog_with_running_idle_panting_and_able_to/rotations/east.png",
+          "north": "Create_a_dog_with_running_idle_panting_and_able_to/rotations/north.png"
+        },
+        "animations": {
+          "Run": {
+            "east": [
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/east/frame_000.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/east/frame_001.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/east/frame_002.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/east/frame_003.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/east/frame_004.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/east/frame_005.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/east/frame_006.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/east/frame_007.png"
+            ],
+            "west": [
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/west/frame_000.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/west/frame_001.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/west/frame_002.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/west/frame_003.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/west/frame_004.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/west/frame_005.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/west/frame_006.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Run/west/frame_007.png"
+            ]
+          },
+          "Bark": {
+            "south": [
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/south/frame_000.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/south/frame_001.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/south/frame_002.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/south/frame_003.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/south/frame_004.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/south/frame_005.png"
+            ],
+            "west": [
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/west/frame_000.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/west/frame_001.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/west/frame_002.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/west/frame_003.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/west/frame_004.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/west/frame_005.png"
+            ],
+            "north": [
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/north/frame_000.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/north/frame_001.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/north/frame_002.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/north/frame_003.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/north/frame_004.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/north/frame_005.png"
+            ],
+            "east": [
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/east/frame_000.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/east/frame_001.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/east/frame_002.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/east/frame_003.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/east/frame_004.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Bark/east/frame_005.png"
+            ]
+          },
+          "Idle": {
+            "east": [
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/east/frame_000.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/east/frame_001.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/east/frame_002.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/east/frame_003.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/east/frame_004.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/east/frame_005.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/east/frame_006.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/east/frame_007.png"
+            ],
+            "west": [
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/west/frame_000.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/west/frame_001.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/west/frame_002.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/west/frame_003.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/west/frame_004.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/west/frame_005.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/west/frame_006.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Idle/west/frame_007.png"
+            ]
+          },
+          "Walk": {
+            "west": [
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Walk/west/frame_000.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Walk/west/frame_001.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Walk/west/frame_002.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Walk/west/frame_003.png"
+            ],
+            "east": [
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Walk/east/frame_000.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Walk/east/frame_001.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Walk/east/frame_002.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Walk/east/frame_003.png"
+            ]
+          },
+          "Dog_is_panting_catching_its_breath._two_puffs_from": {
+            "east": [
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Dog_is_panting_catching_its_breath._two_puffs_from/east/frame_000.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Dog_is_panting_catching_its_breath._two_puffs_from/east/frame_001.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Dog_is_panting_catching_its_breath._two_puffs_from/east/frame_002.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Dog_is_panting_catching_its_breath._two_puffs_from/east/frame_003.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Dog_is_panting_catching_its_breath._two_puffs_from/east/frame_004.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Dog_is_panting_catching_its_breath._two_puffs_from/east/frame_005.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Dog_is_panting_catching_its_breath._two_puffs_from/east/frame_006.png"
+            ],
+            "west": [
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Dog_is_panting_catching_its_breath._two_puffs_from/west/frame_000.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Dog_is_panting_catching_its_breath._two_puffs_from/west/frame_001.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Dog_is_panting_catching_its_breath._two_puffs_from/west/frame_002.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Dog_is_panting_catching_its_breath._two_puffs_from/west/frame_003.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Dog_is_panting_catching_its_breath._two_puffs_from/west/frame_004.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Dog_is_panting_catching_its_breath._two_puffs_from/west/frame_005.png",
+              "Create_a_dog_with_running_idle_panting_and_able_to/animations/Dog_is_panting_catching_its_breath._two_puffs_from/west/frame_006.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "6ec63b50-6582-4574-933d-5f914fa54f45",
+        "name": "sitting",
+        "prompt": "Create a dog, with running, idle, panting, and able to look in 180 degrees split in 6 steps",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "dog",
+        "directions": 4,
+        "view": "side",
+        "created_at": "2026-06-21T11:34:31.671362+00:00"
+      },
+      "folder": "sitting",
+      "frames": {
+        "rotations": {
+          "south": "sitting/rotations/south.png",
+          "west": "sitting/rotations/west.png",
+          "east": "sitting/rotations/east.png",
+          "north": "sitting/rotations/north.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.0",
+  "export_date": "2026-06-21T11:48:38.443872"
+}
