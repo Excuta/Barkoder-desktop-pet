@@ -57,10 +57,13 @@ def run() -> None:
     # Audio controller
     audio = AudioController(ASSETS_DIR / "bark.wav")
 
-    # System tray
-    tray_icon_path = ASSETS_DIR / "sitting" / "rotations" / "south.png"
-    if tray_icon_path.exists():
-        tray_icon = QIcon(str(tray_icon_path))
+    # System tray — prefer ICO (multi-size) for best OS rendering
+    ico_path = ASSETS_DIR / "icon.ico"
+    png_path = ASSETS_DIR / "sitting" / "rotations" / "south.png"
+    if ico_path.exists():
+        tray_icon = QIcon(str(ico_path))
+    elif png_path.exists():
+        tray_icon = QIcon(str(png_path))
     else:
         tray_icon = QIcon()
     startup_mgr = StartupManager("Barkoder")
