@@ -27,16 +27,18 @@ def test_wander_exits_when_cursor_moves():
     assert not b.should_enter(ctx(cursor_idle_seconds=1.0))
 
 
-def test_wander_picks_target_on_enter(monkeypatch):
-    b = WanderBehavior(wander_threshold_s=6.0, walk_speed_px=2.5, screen_width=1920)
-    import random
-    monkeypatch.setattr(random, "uniform", lambda a, b_: 800.0)
+def test_wander_on_enter_starts_sitting():
+    b = WanderBehavior(wander_threshold_s=6.0, walk_speed_px=2.5, screen_width=1920,
+                       wander_lay_chance=0.0)
     b.on_enter(ctx())
-    assert b._target_x == 800.0
+    req, delta = b.update(ctx(dog_x=200))
+    assert req.animation == "Sit"
+    assert delta == 0.0
 
 
 def test_wander_returns_walk_animation():
-    b = WanderBehavior(wander_threshold_s=6.0, walk_speed_px=2.5, screen_width=1920)
+    b = WanderBehavior(wander_threshold_s=6.0, walk_speed_px=2.5, screen_width=1920,
+                       wander_run_chance=0.0)
     b._target_x = 500.0
     req, delta = b.update(ctx(dog_x=200))
     assert req.animation == "Walk"
