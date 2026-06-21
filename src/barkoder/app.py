@@ -10,6 +10,7 @@ from barkoder.behaviors.idle import IdleBehavior
 from barkoder.behaviors.walk import WalkBehavior
 from barkoder.behaviors.run import RunBehavior
 from barkoder.behaviors.pant import PantBehavior
+from barkoder.behaviors.bark_walk import BarkWalkBehavior
 from barkoder.config import load_settings
 from barkoder.state_machine import StateMachine
 from barkoder.tracker import CursorTracker
@@ -53,7 +54,8 @@ def run() -> None:
     walk_b = WalkBehavior(near_x_px=th.near_x_px, walk_speed_px=mv.walk_speed_px)
     idle_b = IdleBehavior()
     pant_b = PantBehavior(sm=None, min_cycles=pa.min_cycles, max_cycles=pa.max_cycles)
-    sm = StateMachine([idle_b, walk_b, pant_b, run_b])
+    bark_walk_b = BarkWalkBehavior(near_x_px=th.near_x_px, bark_active_window_s=th.bark_active_window_s)
+    sm = StateMachine([idle_b, bark_walk_b, walk_b, pant_b, run_b])
     run_b._sm = sm  # inject after construction
     pant_b._sm = sm  # inject after construction
 
@@ -79,7 +81,7 @@ def run() -> None:
         if anim_key != current_anim:
             current_anim = anim_key
             anim_fps = getattr(fps, req.animation, fps.Idle)
-            is_loop = req.animation not in ("Pant",)
+            is_loop = req.animation not in ("Pant", "Bark")
             player.set_animation(
                 loader.get_frames(req.animation, req.direction),
                 fps=float(anim_fps),
@@ -95,6 +97,12 @@ def run() -> None:
             if pant_b._exhausted:
                 # Force re-evaluation next tick by clearing the one-shot state
                 current_anim = ("", "")
+
+        # Handle bark animation cycle completion
+        if req.animation == "Bark" and player.is_finished:
+            player.reset_finished()
+            bark_walk_b.notify_animation_finished()
+            current_anim = ("", "")  # force re-evaluation
 
         frame = player.current_frame
         if frame is not None:
