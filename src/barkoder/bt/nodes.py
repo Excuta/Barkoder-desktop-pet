@@ -92,7 +92,14 @@ class BTCooldown(BTNode):
 
 
 class BTRandomDwell(BTNode):
-    """Holds child running for a random duration [min_s, max_s], then yields."""
+    """Holds child running for a random duration [min_s, max_s], then yields.
+
+    When the budget expires the decorator returns None, letting the parent
+    selector re-evaluate priorities on the next tick.  The inner BTLeaf is
+    NOT deactivated (on_exit is not called) — the child stays "entered" and
+    resumes without on_enter if the selector selects it again.  This is
+    intentional: dwell throttles the selector, not the behavior lifecycle.
+    """
 
     def __init__(self, child: BTNode, min_s: float, max_s: float) -> None:
         self._child = child
@@ -100,21 +107,25 @@ class BTRandomDwell(BTNode):
         self._max = max_s
         self._budget: float = 0.0
         self._elapsed: float = 0.0
+        self._has_budget: bool = False
 
     def tick(self, ctx: "CursorContext", delta_s: float) -> Optional[BTResult]:
         result = self._child.tick(ctx, delta_s)
         if result is not None:
-            if self._budget == 0.0:
+            if not self._has_budget:
                 self._budget = random.uniform(self._min, self._max)
+                self._has_budget = True
                 _log.debug("BTRandomDwell: budget=%.1fs", self._budget)
             self._elapsed += delta_s
             if self._elapsed >= self._budget:
                 self._elapsed = 0.0
                 self._budget = 0.0
+                self._has_budget = False
                 _log.debug("BTRandomDwell: budget expired, yielding")
-                return None  # budget exhausted — let selector try higher-priority next tick
+                return None  # budget exhausted — let selector re-evaluate next tick
             return result
         # Child not active — reset
         self._elapsed = 0.0
         self._budget = 0.0
+        self._has_budget = False
         return None

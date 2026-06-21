@@ -179,13 +179,14 @@ def test_random_dwell_holds_child():
     # Tick 1 at t=0.0 — budget is set to 2.0, elapsed becomes 1.0
     r1 = node.tick(CTX, 1.0)
     assert r1 is not None
+    assert node._has_budget is True
     assert node._budget == 2.0
     assert node._elapsed == 1.0
 
     # Tick 2 at t=1.0 — elapsed becomes 2.0 == budget → yields
     r2 = node.tick(CTX, 1.0)
     assert r2 is None
-    assert node._budget == 0.0
+    assert node._has_budget is False
     assert node._elapsed == 0.0
 
 
@@ -196,6 +197,7 @@ def test_random_dwell_resets_on_child_failure():
 
     # Tick once to set budget and accrue elapsed
     node.tick(CTX, 1.0)
+    assert node._has_budget is True
     assert node._budget == 5.0
     assert node._elapsed == 1.0
 
@@ -204,5 +206,5 @@ def test_random_dwell_resets_on_child_failure():
     result = node.tick(CTX, 1.0)
 
     assert result is None
-    assert node._budget == 0.0
+    assert node._has_budget is False
     assert node._elapsed == 0.0
