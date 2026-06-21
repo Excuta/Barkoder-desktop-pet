@@ -3,7 +3,8 @@ import time
 from pathlib import Path
 
 from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from barkoder.animation import AnimationPlayer, AssetLoader
 from barkoder.behaviors.idle import IdleBehavior
@@ -15,6 +16,7 @@ from barkoder.behaviors.wander import WanderBehavior
 from barkoder.behaviors.arrival_sit import ArrivalSitBehavior
 from barkoder.behaviors.idle_sit import IdleSitBehavior
 from barkoder.config import load_settings
+from barkoder.startup import StartupManager
 from barkoder.state_machine import StateMachine
 from barkoder.tracker import CursorTracker
 from barkoder.window import DogWindow
@@ -45,6 +47,40 @@ def run() -> None:
     dog_x = float(geo.width() // 2 - 34)
     window.move_to(dog_x, dog_y)
     window.show()
+
+    # System tray
+    tray_icon_path = (
+        ASSETS_DIR
+        / "Create_a_dog_with_running_idle_panting_and_able_to"
+        / "rotations"
+        / "east.png"
+    )
+    tray_icon = QIcon(str(tray_icon_path)) if tray_icon_path.exists() else QIcon()
+    startup_mgr = StartupManager("Barkoder")
+
+    tray = QSystemTrayIcon(tray_icon, parent=app)
+    menu = QMenu()
+
+    mute_action = menu.addAction("Mute")
+    mute_action.setCheckable(True)
+    mute_action.setChecked(False)
+
+    boot_action = menu.addAction("Start on Boot")
+    boot_action.setCheckable(True)
+    boot_action.setChecked(startup_mgr.is_enabled())
+
+    def toggle_boot(checked: bool) -> None:
+        if checked:
+            startup_mgr.enable(str(Path(sys.executable).resolve()))
+        else:
+            startup_mgr.disable()
+
+    boot_action.toggled.connect(toggle_boot)
+    menu.addSeparator()
+    quit_action = menu.addAction("Quit")
+    quit_action.triggered.connect(app.quit)
+    tray.setContextMenu(menu)
+    tray.show()
 
     th = settings.thresholds
     mv = settings.movement
