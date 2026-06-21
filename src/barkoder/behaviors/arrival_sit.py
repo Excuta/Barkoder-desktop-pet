@@ -15,6 +15,7 @@ class ArrivalSitBehavior(Behavior):
         self._sit_hold = sit_hold_seconds
         self._triggered = False
         self._hold_elapsed = 0.0
+        self._hold_logged = False
 
     def should_enter(self, ctx: CursorContext) -> bool:
         if self._triggered:
@@ -23,6 +24,7 @@ class ArrivalSitBehavior(Behavior):
 
     def on_enter(self, ctx: CursorContext) -> None:
         self._hold_elapsed = 0.0
+        self._hold_logged = False
         _log.info("arrival_sit: hold started (dist=%.0fpx)", ctx.horizontal_distance)
 
     def on_exit(self, ctx: CursorContext) -> None:
@@ -30,8 +32,9 @@ class ArrivalSitBehavior(Behavior):
 
     def update(self, ctx: CursorContext) -> tuple[AnimationRequest, float]:
         self._hold_elapsed += 0.016
-        if self.hold_done and self._hold_elapsed < self._sit_hold + 0.032:
+        if self.hold_done and not self._hold_logged:
             _log.info("arrival_sit: hold done")
+            self._hold_logged = True
         return AnimationRequest("Sit", ctx.bark_direction_4), 0.0
 
     @property
