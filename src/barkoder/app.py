@@ -100,9 +100,12 @@ def run() -> None:
     # Audio controller
     audio = AudioController(ASSETS_DIR / "bark.wav")
 
-    # System tray — load pre-baked multi-size icon (content-cropped, no transparent padding)
+    # Load icon once — used for app icon, tray, and window
     ico_path = ASSETS_DIR / "icon.ico"
-    tray_icon = QIcon(str(ico_path)) if ico_path.exists() else QIcon()
+    app_icon = QIcon(str(ico_path)) if ico_path.exists() else QIcon()
+    app.setWindowIcon(app_icon)   # prevents Qt from overwriting the exe's embedded icon
+    window.setWindowIcon(app_icon)
+    tray_icon = app_icon
     startup_mgr = StartupManager("Barkoder")
 
     tray = QSystemTrayIcon(tray_icon, parent=app)
