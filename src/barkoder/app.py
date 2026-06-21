@@ -189,6 +189,7 @@ def run() -> None:
         wander_threshold_s=th.wander_threshold_s,
         walk_speed_px=mv.walk_speed_px,
         screen_width=geo.width(),
+        dog_size=int(DOG_SIZE),
     )
     arrival_sit_b = ArrivalSitBehavior(
         arrival_x_px=th.arrival_x_px,

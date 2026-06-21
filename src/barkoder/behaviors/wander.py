@@ -10,10 +10,17 @@ class WanderBehavior(Behavior):
     priority = 6
     name = "wander"
 
-    def __init__(self, wander_threshold_s: float, walk_speed_px: float, screen_width: int) -> None:
+    def __init__(
+        self,
+        wander_threshold_s: float,
+        walk_speed_px: float,
+        screen_width: int,
+        dog_size: int = 68,
+    ) -> None:
         self._threshold = wander_threshold_s
         self._speed = walk_speed_px
         self._screen_width = screen_width
+        self._dog_size = dog_size
         self._target_x: float | None = None
         self._rest_remaining: float = 0.0
         self._last_direction: str = "east"
@@ -37,21 +44,23 @@ class WanderBehavior(Behavior):
         _log.info("wander exit")
 
     def _pick_target(self, dog_x: float) -> None:
-        margin = 50.0
+        margin = 150.0
+        # hi must not exceed the app's clamp boundary (screen_width - dog_size)
         lo = margin
-        hi = self._screen_width - margin - 68
+        hi = self._screen_width - self._dog_size - margin
 
-        # Bias away from edge to prevent wall-hugging
-        near_left = dog_x < 100.0
-        near_right = dog_x > self._screen_width - 100.0 - 68
+        if lo >= hi:
+            # Screen too narrow — fall back to centre
+            lo = float(self._screen_width) * 0.2
+            hi = float(self._screen_width) * 0.8
+
+        # Extra bias away from whichever edge the dog is already near
+        near_left = dog_x < self._screen_width * 0.25
+        near_right = dog_x > self._screen_width * 0.75
         if near_left:
-            lo = max(lo, self._screen_width * 0.2)
-            rest_bonus = random.uniform(0.5, 1.5)
+            lo = max(lo, self._screen_width * 0.3)
         elif near_right:
-            hi = min(hi, self._screen_width * 0.8)
-            rest_bonus = random.uniform(0.5, 1.5)
-        else:
-            rest_bonus = 0.0
+            hi = min(hi, self._screen_width * 0.7)
 
         x = random.uniform(lo, hi)
         for _ in range(10):
@@ -60,27 +69,13 @@ class WanderBehavior(Behavior):
                 x = candidate
                 break
         self._target_x = x
-        rest = random.uniform(0.5, 2.0) + rest_bonus
-        self._rest_remaining = rest
-        _log.info("wander target=%.0f rest=%.1fs", x, rest)
+        self._rest_remaining = random.uniform(0.5, 2.0)
+        _log.info("wander target=%.0f rest=%.1fs", x, self._rest_remaining)
 
     def update(self, ctx: CursorContext) -> tuple[AnimationRequest, float]:
-        # Rest at current target before picking a new one
         if self._rest_remaining > 0:
             self._rest_remaining -= 0.016
             return AnimationRequest("Idle", self._last_direction), 0.0
-
-        # Detect stuck at actual screen wall — sit and re-pick toward centre
-        at_left_wall = ctx.dog_x < 30.0
-        at_right_wall = ctx.dog_x > self._screen_width - 98.0  # 30 + 68
-        if self._target_x is not None:
-            toward_wall = (at_left_wall and self._target_x < ctx.dog_x) or \
-                          (at_right_wall and self._target_x > ctx.dog_x)
-            if toward_wall:
-                _log.info("wander: hit screen wall, resting and re-picking")
-                self._pick_target(ctx.dog_x)
-                self._rest_remaining += random.uniform(1.0, 2.0)
-                return AnimationRequest("Sit", self._last_direction), 0.0
 
         if self._target_x is None or abs(ctx.dog_x - self._target_x) < self._speed + 1:
             self._pick_target(ctx.dog_x)
