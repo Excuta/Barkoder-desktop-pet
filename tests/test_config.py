@@ -14,7 +14,7 @@ def test_near_x_px_default():
 
 def test_walk_speed():
     s = load_settings(CONFIG_PATH)
-    assert s.movement.walk_speed_px == 2.5
+    assert s.movement.walk_speed_px == 2.0
 
 def test_panting_min_cycles():
     s = load_settings(CONFIG_PATH)
