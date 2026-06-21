@@ -32,8 +32,16 @@ def _resource_dir() -> Path:
         return Path(sys._MEIPASS)
     return Path(__file__).parent.parent.parent
 
+def _config_path() -> Path:
+    # Prefer config.toml placed next to the exe (lets users tune without rebuilding)
+    if hasattr(sys, "_MEIPASS"):
+        user_cfg = Path(sys.executable).parent / "config.toml"
+        if user_cfg.exists():
+            return user_cfg
+    return _resource_dir() / "config.toml"
+
 ASSETS_DIR = _resource_dir() / "assets"
-CONFIG_PATH = _resource_dir() / "config.toml"
+CONFIG_PATH = _config_path()
 
 
 def _detect_taskbar_height(screen) -> int:
