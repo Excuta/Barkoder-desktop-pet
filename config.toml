@@ -25,3 +25,7 @@ Bark = 5
 Idle = 3
 Pant = 6
 Sit  = 1
+
+[display]
+scale = 2
+sprite_bottom_pad_px = 15

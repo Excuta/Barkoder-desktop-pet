@@ -1,3 +1,4 @@
+import logging
 import sys
 import time
 from pathlib import Path
@@ -17,13 +18,11 @@ from barkoder.behaviors.wander import WanderBehavior
 from barkoder.behaviors.arrival_sit import ArrivalSitBehavior
 from barkoder.behaviors.idle_sit import IdleSitBehavior
 from barkoder.config import load_settings
+from barkoder.logging_setup import setup_logging
 from barkoder.startup import StartupManager
 from barkoder.state_machine import StateMachine
 from barkoder.tracker import CursorTracker
 from barkoder.window import DogWindow
-
-
-DOG_SIZE = 136
 
 
 def _resource_dir() -> Path:
@@ -42,13 +41,24 @@ def _detect_taskbar_height(screen) -> int:
 
 
 def run() -> None:
+    setup_logging(debug="--debug" in sys.argv)
+    log = logging.getLogger("barkoder.app")
+
     settings = load_settings(CONFIG_PATH)
     app = QApplication.instance() or QApplication(sys.argv)
 
     screen = app.primaryScreen()
     geo = screen.geometry()
     avail = screen.availableGeometry()
-    dog_y = float(avail.y() + avail.height() - DOG_SIZE)
+
+    disp = settings.display
+    DOG_SIZE = 68 * disp.scale
+    pad_scaled = disp.sprite_bottom_pad_px * disp.scale
+    dog_y = float(avail.y() + avail.height() - DOG_SIZE + pad_scaled)
+
+    log.info("config=%s", CONFIG_PATH)
+    log.info("screen=%dx%d avail_y=%d DOG_SIZE=%d dog_y=%d pad_px=%d",
+             geo.width(), geo.height(), avail.y(), DOG_SIZE, dog_y, pad_scaled)
 
     loader = AssetLoader(ASSETS_DIR)
     player = AnimationPlayer()
@@ -104,6 +114,10 @@ def run() -> None:
     th = settings.thresholds
     mv = settings.movement
     pa = settings.panting
+
+    log.info("cfg near_x=%.0f far_x=%.0f walk=%.1f run=%.1f wander_s=%.0f sit_s=%.0f",
+             th.near_x_px, th.far_x_px, mv.walk_speed_px, mv.run_speed_px,
+             th.wander_threshold_s, th.sit_threshold_s)
 
     run_b = RunBehavior(
         far_x_px=th.far_x_px, run_speed_px=mv.run_speed_px, sm=None,

@@ -40,11 +40,18 @@ class AnimationFps:
 
 
 @dataclasses.dataclass(frozen=True)
+class DisplaySettings:
+    scale: int = 2
+    sprite_bottom_pad_px: int = 15
+
+
+@dataclasses.dataclass(frozen=True)
 class Settings:
     thresholds: Thresholds = dataclasses.field(default_factory=Thresholds)
     panting: PantingSettings = dataclasses.field(default_factory=PantingSettings)
     movement: MovementSettings = dataclasses.field(default_factory=MovementSettings)
     animation_fps: AnimationFps = dataclasses.field(default_factory=AnimationFps)
+    display: DisplaySettings = dataclasses.field(default_factory=DisplaySettings)
 
 
 def _parse_settings(data: dict) -> Settings:
@@ -57,6 +64,7 @@ def _parse_settings(data: dict) -> Settings:
         panting=_from_dict(PantingSettings, data.get("panting", {})),
         movement=_from_dict(MovementSettings, data.get("movement", {})),
         animation_fps=_from_dict(AnimationFps, data.get("animation_fps", {})),
+        display=_from_dict(DisplaySettings, data.get("display", {})),
     )
 
 

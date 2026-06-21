@@ -1,6 +1,10 @@
+import logging
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPainter, QPixmap
 from PyQt6.QtWidgets import QWidget
+
+_log = logging.getLogger("barkoder.window")
 
 
 class DogWindow(QWidget):
@@ -20,6 +24,7 @@ class DogWindow(QWidget):
         if frame is None:
             self._frame = None
         else:
+            _log.debug("frame %dx%d → %dx%d", frame.width(), frame.height(), self.width(), self.height())
             self._frame = frame.scaled(
                 self.width(), self.height(),
                 Qt.AspectRatioMode.KeepAspectRatio,
