@@ -11,7 +11,7 @@ class RunBehavior(Behavior):
         self,
         far_x_px: float,
         run_speed_px: float,
-        sm: "StateMachine",  # noqa: F821
+        sm,  # StateMachine or BehaviorTree — duck-typed via running_seconds/_run_threshold
         min_run_s: float,
         max_run_s: float,
     ) -> None:

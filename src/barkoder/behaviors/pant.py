@@ -7,7 +7,7 @@ class PantBehavior(Behavior):
     priority = 1
     name = "pant"
 
-    def __init__(self, sm: "StateMachine", min_cycles: int, max_cycles: int) -> None:  # noqa
+    def __init__(self, sm, min_cycles: int, max_cycles: int) -> None:  # sm: StateMachine or BehaviorTree
         self._sm = sm
         self._min_cycles = min_cycles
         self._max_cycles = max_cycles

@@ -1,5 +1,6 @@
 import logging
-from barkoder.bt.nodes import BTNode, BTResult
+from barkoder.behaviors.base import AnimationRequest
+from barkoder.bt.nodes import BTNode
 
 _log = logging.getLogger("barkoder.bt.tree")
 
@@ -20,10 +21,11 @@ class BehaviorTree:
 
     @property
     def current_behavior(self):
-        """Return the active Behavior object, or None."""
-        if self._current_leaf is None:
-            return None
-        return self._current_leaf.behavior
+        """Return the active Behavior object, or None.
+        Not tracked by the BT (BTSelector doesn't expose its active child);
+        kept for API compatibility but always returns None.
+        """
+        return None
 
     def add_running_time(self, delta_s: float) -> None:
         self._running_seconds += delta_s
@@ -39,6 +41,5 @@ class BehaviorTree:
         result = self._root.tick(ctx, delta_s)
         if result is None:
             _log.warning("BT root returned None — no behavior active")
-            from barkoder.state_machine import AnimationRequest
             return AnimationRequest("Idle", "east"), 0.0
         return result.request, result.delta_x
