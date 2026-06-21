@@ -183,7 +183,6 @@ def run() -> None:
         sm=None,
     )
     idle_b = IdleBehavior()
-    pant_b = PantBehavior()
     bark_walk_b = BarkWalkBehavior(near_x_px=th.near_x_px, bark_active_window_s=th.bark_active_window_s, audio=audio, walk_speed_px=mv.walk_speed_px)
     wander_b = WanderBehavior(
         wander_threshold_s=th.wander_threshold_s,
@@ -191,8 +190,7 @@ def run() -> None:
         screen_width=geo.width(),
         dog_size=int(DOG_SIZE),
         run_speed_px=mv.run_speed_px,
-        wander_run_chance=mv.wander_run_chance,
-        wander_lay_chance=mv.wander_lay_chance,
+        pant_cycles_required=pa.pant_cycles_required,
     )
     arrival_sit_b = ArrivalSitBehavior(
         arrival_x_px=th.arrival_x_px,
@@ -201,6 +199,7 @@ def run() -> None:
     idle_sit_b = IdleSitBehavior(sit_threshold_s=th.sit_threshold_s)
     rest_b = RestBehavior(rest_threshold_s=th.rest_threshold_s)
     jump_b = JumpBehavior()
+    pant_b = PantBehavior(pant_cycles_required=pa.pant_cycles_required)
 
     # Build behavior tree
     arrival_sit_leaf = BTLeaf(arrival_sit_b)
@@ -211,7 +210,7 @@ def run() -> None:
             BTLeaf(jump_b),                                     # 3. jump on arrival (self-managed)
             arrival_sit_leaf,                                   # 4. cursor arrived
             BTLeaf(follow_b),                                   # 5. chase cursor
-            BTRandomDwell(BTLeaf(wander_b), 5.0, 10.0),         # 6. wander
+            BTLeaf(wander_b),                                   # 6. wander — runs uninterrupted
             BTRandomDwell(BTLeaf(idle_sit_b), 5.0, 15.0),       # 7. sit
             BTRandomDwell(BTLeaf(rest_b), 10.0, 20.0),          # 8. rest
             BTLeaf(idle_b),                                     # 9. fallback
@@ -261,6 +260,10 @@ def run() -> None:
                 _dev_bark_active = False
                 current_anim = ("", "")
             req, delta_x = bt.tick(ctx, delta_s)
+
+        if wander_b.pant_due:
+            wander_b.pant_due = False
+            pant_b.force_pant()
 
         if req.animation == "Run":
             bt.add_running_time(delta_s)

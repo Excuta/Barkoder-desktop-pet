@@ -23,14 +23,13 @@ class PantingSettings:
     max_run_seconds: float = 20.0
     min_cycles: int = 3
     max_cycles: int = 5
+    pant_cycles_required: int = 2
 
 
 @dataclasses.dataclass(frozen=True)
 class MovementSettings:
     walk_speed_px: float = 2.5
     run_speed_px: float = 6.0
-    wander_run_chance: float = 0.3
-    wander_lay_chance: float = 0.5
 
 
 @dataclasses.dataclass(frozen=True)

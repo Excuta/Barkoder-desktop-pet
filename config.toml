@@ -11,16 +11,15 @@ follow_window_s       = 5.0
 rest_threshold_s      = 60.0
 
 [panting]
-min_run_seconds = 7.0
-max_run_seconds = 13.0
-min_cycles      = 2
-max_cycles      = 4
+min_run_seconds      = 7.0
+max_run_seconds      = 13.0
+min_cycles           = 2
+max_cycles           = 4
+pant_cycles_required = 2
 
 [movement]
-walk_speed_px     = 0.918
-run_speed_px      = 2.142
-wander_run_chance = 0.1
-wander_lay_chance = 0.2
+walk_speed_px = 0.918
+run_speed_px  = 2.142
 
 [animation_fps]
 Walk = 5

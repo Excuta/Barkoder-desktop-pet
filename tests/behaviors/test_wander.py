@@ -27,18 +27,16 @@ def test_wander_exits_when_cursor_moves():
     assert not b.should_enter(ctx(cursor_idle_seconds=1.0))
 
 
-def test_wander_on_enter_starts_sitting():
-    b = WanderBehavior(wander_threshold_s=6.0, walk_speed_px=2.5, screen_width=1920,
-                       wander_lay_chance=0.0)
+def test_wander_on_enter_starts_walking():
+    b = WanderBehavior(wander_threshold_s=6.0, walk_speed_px=2.5, screen_width=1920)
     b.on_enter(ctx())
     req, delta = b.update(ctx(dog_x=200))
-    assert req.animation == "Sit"
-    assert delta == 0.0
+    assert req.animation == "Walk"
 
 
 def test_wander_returns_walk_animation():
-    b = WanderBehavior(wander_threshold_s=6.0, walk_speed_px=2.5, screen_width=1920,
-                       wander_run_chance=0.0)
+    b = WanderBehavior(wander_threshold_s=6.0, walk_speed_px=2.5, screen_width=1920)
+    b.on_enter(ctx())
     b._target_x = 500.0
     req, delta = b.update(ctx(dog_x=200))
     assert req.animation == "Walk"

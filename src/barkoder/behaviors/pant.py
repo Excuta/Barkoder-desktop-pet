@@ -11,14 +11,17 @@ class PantBehavior(Behavior):
     _MAX_INTERVAL = 40.0
     _MIN_CYCLES = 2
     _MAX_CYCLES = 4
-    _RUN_BEFORE_PANT = 1.0  # seconds of running required before pant fires
 
-    def __init__(self) -> None:
+    def __init__(self, pant_cycles_required: int = 2) -> None:
         self._done = False
         self._direction = "east"
         self._interval_remaining: float = random.uniform(self._MIN_INTERVAL, self._MAX_INTERVAL)
         self._cycles_done: int = 0
         self._target_cycles: int = self._MIN_CYCLES
+        self._forced: bool = False
+
+    def force_pant(self) -> None:
+        self._forced = True
 
     def should_enter(self, ctx: CursorContext) -> bool:
         if self._done:
@@ -26,10 +29,11 @@ class PantBehavior(Behavior):
         self._interval_remaining -= 0.016
         if self._interval_remaining > 0.0:
             return False
-        return ctx.running_seconds >= self._RUN_BEFORE_PANT
+        return self._forced
 
     def on_enter(self, ctx: CursorContext) -> None:
         self._done = False
+        self._forced = False
         self._direction = ctx.move_direction
         self._cycles_done = 0
         self._target_cycles = random.randint(self._MIN_CYCLES, self._MAX_CYCLES)
