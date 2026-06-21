@@ -1,7 +1,10 @@
 import dataclasses
+import logging
 import random
 from barkoder.behaviors.base import Behavior, AnimationRequest
 from barkoder.tracker import CursorContext
+
+log = logging.getLogger("barkoder.sm")
 
 
 class StateMachine:
@@ -34,9 +37,6 @@ class StateMachine:
         return self._running_seconds
 
     def tick(self, base_ctx: CursorContext, delta_s: float = 0.016) -> tuple[AnimationRequest, float]:
-        import logging
-        log = logging.getLogger("barkoder.sm")
-
         ctx = dataclasses.replace(
             base_ctx,
             running_seconds=self._running_seconds,
@@ -45,7 +45,11 @@ class StateMachine:
 
         # Decay cooldowns
         for name in list(self._cooldowns):
-            self._cooldowns[name] = max(0.0, self._cooldowns[name] - delta_s)
+            remaining = self._cooldowns[name] - delta_s
+            if remaining <= 0.0:
+                del self._cooldowns[name]
+            else:
+                self._cooldowns[name] = remaining
 
         # Accumulate dwell
         self._dwell_s += delta_s
