@@ -1,4 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
 from PyInstaller.utils.hooks import collect_data_files
 
 a = Analysis(
@@ -31,5 +32,5 @@ exe = EXE(
     strip=False,
     upx=True,
     console=False,
-    icon='assets/icon.ico',
+    icon=os.path.join(SPECPATH, 'assets', 'icon.ico'),
 )
