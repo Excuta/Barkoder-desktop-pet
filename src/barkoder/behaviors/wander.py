@@ -20,7 +20,14 @@ class WanderBehavior(Behavior):
         self._pick_target(ctx.dog_x)
 
     def _pick_target(self, dog_x: float) -> None:
-        self._target_x = random.uniform(34.0, self._screen_width - 102.0)
+        margin = 50.0
+        x = random.uniform(margin, self._screen_width - margin - 68)
+        for _ in range(10):
+            candidate = random.uniform(margin, self._screen_width - margin - 68)
+            if abs(candidate - dog_x) >= 150.0:
+                x = candidate
+                break
+        self._target_x = x
 
     def update(self, ctx: CursorContext) -> tuple[AnimationRequest, float]:
         if abs(ctx.dog_x - self._target_x) < self._speed + 1:

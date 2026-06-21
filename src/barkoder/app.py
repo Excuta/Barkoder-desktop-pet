@@ -23,6 +23,9 @@ from barkoder.tracker import CursorTracker
 from barkoder.window import DogWindow
 
 
+DOG_SIZE = 136
+
+
 def _resource_dir() -> Path:
     if hasattr(sys, "_MEIPASS"):
         return Path(sys._MEIPASS)
@@ -44,13 +47,13 @@ def run() -> None:
 
     screen = app.primaryScreen()
     geo = screen.geometry()
-    taskbar_h = _detect_taskbar_height(screen)
-    dog_y = float(geo.height() - taskbar_h - 68)
+    avail = screen.availableGeometry()
+    dog_y = float(avail.y() + avail.height() - DOG_SIZE)
 
     loader = AssetLoader(ASSETS_DIR)
     player = AnimationPlayer()
     window = DogWindow()
-    dog_x = float(geo.width() // 2 - 34)
+    dog_x = float(geo.width() // 2 - DOG_SIZE // 2)
     window.move_to(dog_x, dog_y)
     window.show()
 
@@ -137,12 +140,12 @@ def run() -> None:
 
         ctx = tracker.compute(dog_x, dog_y, delta_s,
                               sm.running_seconds, sm._run_threshold)
-        req, delta_x = sm.tick(ctx)
+        req, delta_x = sm.tick(ctx, delta_s)
 
         if req.animation == "Run":
             sm.add_running_time(delta_s)
 
-        dog_x = max(0.0, min(geo.width() - 68.0, dog_x + delta_x))
+        dog_x = max(0.0, min(float(geo.width() - DOG_SIZE), dog_x + delta_x))
         window.move_to(dog_x, dog_y)
 
         anim_key = (req.animation, req.direction)

@@ -10,19 +10,19 @@ def test_loads_real_config():
 
 def test_near_x_px_default():
     s = load_settings(CONFIG_PATH)
-    assert s.thresholds.near_x_px == 80.0
+    assert s.thresholds.near_x_px == 100.0
 
 def test_walk_speed():
     s = load_settings(CONFIG_PATH)
-    assert s.movement.walk_speed_px == 2.0
+    assert s.movement.walk_speed_px == 1.2
 
 def test_panting_min_cycles():
     s = load_settings(CONFIG_PATH)
-    assert s.panting.min_cycles == 3
+    assert s.panting.min_cycles == 2
 
 def test_animation_fps_run():
     s = load_settings(CONFIG_PATH)
-    assert s.animation_fps.Run == 12
+    assert s.animation_fps.Run == 8
 
 def test_missing_key_uses_default():
     import tomllib, io

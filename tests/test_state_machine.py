@@ -41,7 +41,7 @@ class MockBehavior(Behavior):
 def test_highest_priority_behavior_wins():
     low = MockBehavior(priority=5, name="low", enters=True)
     high = MockBehavior(priority=2, name="high", enters=True)
-    sm = StateMachine([low, high])
+    sm = StateMachine([low, high], min_dwell_s=0.0)
     ctx = make_ctx()
     sm.tick(ctx)
     assert sm.current_behavior.name == "high"
@@ -50,7 +50,7 @@ def test_highest_priority_behavior_wins():
 def test_fallback_to_lower_priority_when_high_does_not_enter():
     high = MockBehavior(priority=1, name="high", enters=False)
     low = MockBehavior(priority=8, name="low", enters=True)
-    sm = StateMachine([high, low])
+    sm = StateMachine([high, low], min_dwell_s=0.0)
     ctx = make_ctx()
     sm.tick(ctx)
     assert sm.current_behavior.name == "low"
@@ -59,7 +59,7 @@ def test_fallback_to_lower_priority_when_high_does_not_enter():
 def test_on_enter_called_on_transition():
     a = MockBehavior(priority=1, name="a", enters=True)
     b = MockBehavior(priority=2, name="b", enters=True)
-    sm = StateMachine([a, b])
+    sm = StateMachine([a, b], min_dwell_s=0.0)
     ctx = make_ctx()
     sm.tick(ctx)
     assert a.entered
@@ -68,7 +68,7 @@ def test_on_enter_called_on_transition():
 def test_on_exit_called_when_leaving():
     stays = MockBehavior(priority=1, name="stays", enters=True)
     leaves = MockBehavior(priority=2, name="leaves", enters=False)
-    sm = StateMachine([stays, leaves])
+    sm = StateMachine([stays, leaves], min_dwell_s=0.0)
     ctx = make_ctx()
     # First tick: "stays" enters (priority 1 wins)
     sm.tick(ctx)
@@ -78,7 +78,7 @@ def test_on_exit_called_when_leaving():
 
 def test_same_behavior_not_re_entered():
     b = MockBehavior(priority=1, name="b", enters=True)
-    sm = StateMachine([b])
+    sm = StateMachine([b], min_dwell_s=0.0)
     ctx = make_ctx()
     sm.tick(ctx)
     b.entered = False  # reset
@@ -88,7 +88,7 @@ def test_same_behavior_not_re_entered():
 
 def test_tick_returns_animation_request_and_delta():
     b = MockBehavior(priority=1, name="b", enters=True, delta_x=0.0)
-    sm = StateMachine([b])
+    sm = StateMachine([b], min_dwell_s=0.0)
     req, delta = sm.tick(make_ctx())
     assert isinstance(req, AnimationRequest)
     assert isinstance(delta, float)

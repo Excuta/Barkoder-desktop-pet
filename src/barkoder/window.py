@@ -13,11 +13,18 @@ class DogWindow(QWidget):
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
-        self.setFixedSize(68, 68)
+        self.setFixedSize(136, 136)
         self._frame: QPixmap | None = None
 
-    def set_frame(self, pixmap: QPixmap) -> None:
-        self._frame = pixmap
+    def set_frame(self, frame) -> None:
+        if frame is None:
+            self._frame = None
+        else:
+            self._frame = frame.scaled(
+                self.width(), self.height(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
         self.update()
 
     def paintEvent(self, _event) -> None:

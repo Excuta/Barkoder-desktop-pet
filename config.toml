@@ -1,27 +1,27 @@
 [thresholds]
-near_x_px            = 80.0
-far_x_px             = 250.0
-arrival_x_px         = 50.0
-bark_active_window_s = 2.0
-wander_threshold_s   = 6.0
-sit_threshold_s      = 15.0
-sit_hold_seconds     = 1.5
-cursor_move_threshold_px = 5.0
+near_x_px            = 100.0
+far_x_px             = 280.0
+arrival_x_px         = 65.0
+bark_active_window_s = 5.0
+wander_threshold_s   = 8.0
+sit_threshold_s      = 20.0
+sit_hold_seconds     = 2.5
+cursor_move_threshold_px = 12.0
 
 [panting]
-min_run_seconds = 10.0
-max_run_seconds = 20.0
-min_cycles      = 3
-max_cycles      = 5
+min_run_seconds = 7.0
+max_run_seconds = 13.0
+min_cycles      = 2
+max_cycles      = 4
 
 [movement]
-walk_speed_px = 2.5
-run_speed_px  = 6.0
+walk_speed_px = 1.2
+run_speed_px  = 2.8
 
 [animation_fps]
-Walk = 8
-Run  = 12
-Bark = 8
-Idle = 6
-Pant = 10
+Walk = 5
+Run  = 8
+Bark = 5
+Idle = 3
+Pant = 6
 Sit  = 1
