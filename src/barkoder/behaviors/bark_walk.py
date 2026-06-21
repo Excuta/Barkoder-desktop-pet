@@ -11,9 +11,6 @@ _WALK_STEPS = 3  # update ticks to walk before barking again
 class BarkWalkBehavior(Behavior):
     priority = 2
     name = "bark_walk"
-    min_dwell_s = 3.0
-    max_dwell_s = 6.0
-    exit_cooldown_s = 6.0
 
     def __init__(self, near_x_px: float, bark_active_window_s: float, audio=None) -> None:
         self._near = near_x_px

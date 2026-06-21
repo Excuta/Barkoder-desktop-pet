@@ -6,9 +6,6 @@ from barkoder.tracker import CursorContext
 class RunBehavior(Behavior):
     priority = 4
     name = "run"
-    min_dwell_s = 3.0
-    max_dwell_s = 8.0
-    exit_cooldown_s = 2.0
 
     def __init__(
         self,

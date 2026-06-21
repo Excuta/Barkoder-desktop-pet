@@ -22,7 +22,8 @@ from barkoder.behaviors.idle_sit import IdleSitBehavior
 from barkoder.config import load_settings
 from barkoder.logging_setup import setup_logging
 from barkoder.startup import StartupManager
-from barkoder.state_machine import StateMachine
+from barkoder.behavior_tree import BehaviorTree
+from barkoder.bt.nodes import BTLeaf, BTSelector, BTCooldown, BTRandomDwell
 from barkoder.tracker import CursorTracker
 from barkoder.window import DogWindow
 
@@ -166,9 +167,22 @@ def run() -> None:
         sit_hold_seconds=th.sit_hold_seconds,
     )
     idle_sit_b = IdleSitBehavior(sit_threshold_s=th.sit_threshold_s)
-    sm = StateMachine([idle_b, bark_walk_b, walk_b, pant_b, run_b, wander_b, arrival_sit_b, idle_sit_b])
-    run_b._sm = sm  # inject after construction
-    pant_b._sm = sm  # inject after construction
+    # Build behavior tree
+    arrival_sit_leaf = BTLeaf(arrival_sit_b)
+    bt = BehaviorTree(
+        BTSelector([
+            BTLeaf(pant_b),
+            BTCooldown(BTLeaf(bark_walk_b), 6.0),
+            arrival_sit_leaf,
+            BTRandomDwell(BTLeaf(run_b), 3.0, 8.0),
+            BTRandomDwell(BTLeaf(walk_b), 3.0, 8.0),
+            BTRandomDwell(BTLeaf(wander_b), 5.0, 10.0),
+            BTRandomDwell(BTLeaf(idle_sit_b), 5.0, 15.0),
+            BTLeaf(idle_b),
+        ])
+    )
+    run_b._sm = bt   # BehaviorTree has same .running_seconds and ._run_threshold attrs
+    pant_b._sm = bt
 
     tracker = CursorTracker(move_threshold_px=th.cursor_move_threshold_px)
     last_tick = time.monotonic()
@@ -182,11 +196,11 @@ def run() -> None:
         last_tick = now
 
         ctx = tracker.compute(dog_x, dog_y, delta_s,
-                              sm.running_seconds, sm._run_threshold)
-        req, delta_x = sm.tick(ctx, delta_s)
+                              bt.running_seconds, bt._run_threshold)
+        req, delta_x = bt.tick(ctx, delta_s)
 
         if req.animation == "Run":
-            sm.add_running_time(delta_s)
+            bt.add_running_time(delta_s)
 
         dog_x = max(0.0, min(float(geo.width() - DOG_SIZE), dog_x + delta_x))
         window.move_to(dog_x, dog_y)
@@ -219,7 +233,7 @@ def run() -> None:
             current_anim = ("", "")  # force re-evaluation
 
         # Handle arrival-sit hold completion
-        if req.animation == "Sit" and sm.current_behavior is arrival_sit_b:
+        if req.animation == "Sit" and arrival_sit_leaf._active:
             if arrival_sit_b.hold_done:
                 arrival_sit_b._triggered = True
                 wander_b.force_start()

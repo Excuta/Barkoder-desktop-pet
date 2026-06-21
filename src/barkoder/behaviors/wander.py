@@ -9,9 +9,6 @@ _log = logging.getLogger("barkoder.wander")
 class WanderBehavior(Behavior):
     priority = 6
     name = "wander"
-    min_dwell_s = 5.0
-    max_dwell_s = 10.0
-    exit_cooldown_s = 3.0
 
     def __init__(self, wander_threshold_s: float, walk_speed_px: float, screen_width: int) -> None:
         self._threshold = wander_threshold_s
