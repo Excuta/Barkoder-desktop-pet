@@ -291,8 +291,7 @@ def run() -> None:
         if req.animation == "Pant" and player.is_finished:
             player.reset_finished()
             pant_b.notify_animation_finished()
-            if pant_b._done:
-                current_anim = ("", "")
+            current_anim = ("", "")  # always restart so next cycle plays from frame 0
 
         # Handle bark animation cycle completion
         if req.animation == "Bark" and player.is_finished:
