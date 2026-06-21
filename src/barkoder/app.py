@@ -190,6 +190,9 @@ def run() -> None:
         walk_speed_px=mv.walk_speed_px,
         screen_width=geo.width(),
         dog_size=int(DOG_SIZE),
+        run_speed_px=mv.run_speed_px,
+        wander_run_chance=mv.wander_run_chance,
+        wander_lay_chance=mv.wander_lay_chance,
     )
     arrival_sit_b = ArrivalSitBehavior(
         arrival_x_px=th.arrival_x_px,
@@ -197,7 +200,7 @@ def run() -> None:
     )
     idle_sit_b = IdleSitBehavior(sit_threshold_s=th.sit_threshold_s)
     rest_b = RestBehavior(rest_threshold_s=th.rest_threshold_s)
-    jump_b = JumpBehavior(screen_height=geo.height(), near_x_px=th.near_x_px)
+    jump_b = JumpBehavior()
 
     # Build behavior tree
     arrival_sit_leaf = BTLeaf(arrival_sit_b)
@@ -293,6 +296,12 @@ def run() -> None:
             pant_b.notify_animation_finished()
             current_anim = ("", "")  # always restart so next cycle plays from frame 0
 
+        # Handle jump animation completion
+        if req.animation == "Jump" and player.is_finished:
+            player.reset_finished()
+            jump_b.notify_animation_finished()
+            current_anim = ("", "")
+
         # Handle bark animation cycle completion
         if req.animation == "Bark" and player.is_finished:
             player.reset_finished()
@@ -301,10 +310,8 @@ def run() -> None:
             current_anim = ("", "")  # force re-evaluation
 
         # Handle arrival-sit hold completion.
-        # Guard against jump's pre/post-sit: jump._active means jump won this tick.
         if (req.animation == "Sit"
-                and arrival_sit_leaf._active
-                and not jump_b._active):
+                and arrival_sit_leaf._active):
             if arrival_sit_b.hold_done:
                 arrival_sit_b._triggered = True
                 wander_b.force_start()
