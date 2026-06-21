@@ -12,3 +12,13 @@ build/
 .idea/
 .vscode/
 *.swp
+
+# Build artifacts and internal reports
+build_output.txt
+task-*.md
+scan-reports/
+.env
+
+# Claude Code project settings
+.claude/
+docs/
