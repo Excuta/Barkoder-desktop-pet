@@ -29,6 +29,8 @@ class PantingSettings:
 class MovementSettings:
     walk_speed_px: float = 2.5
     run_speed_px: float = 6.0
+    wander_run_chance: float = 0.3
+    wander_lay_chance: float = 0.5
 
 
 @dataclasses.dataclass(frozen=True)

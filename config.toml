@@ -17,8 +17,10 @@ min_cycles      = 2
 max_cycles      = 4
 
 [movement]
-walk_speed_px = 0.918
-run_speed_px  = 2.142
+walk_speed_px     = 0.918
+run_speed_px      = 2.142
+wander_run_chance = 0.3
+wander_lay_chance = 0.5
 
 [animation_fps]
 Walk = 5
