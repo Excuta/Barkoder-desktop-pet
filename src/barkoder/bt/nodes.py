@@ -94,22 +94,37 @@ class BTCooldown(BTNode):
 class BTRandomDwell(BTNode):
     """Holds child running for a random duration [min_s, max_s], then yields.
 
-    When the budget expires the decorator returns None, letting the parent
-    selector re-evaluate priorities on the next tick.  The inner BTLeaf is
-    NOT deactivated (on_exit is not called) — the child stays "entered" and
-    resumes without on_enter if the selector selects it again.  This is
-    intentional: dwell throttles the selector, not the behavior lifecycle.
+    After the budget expires the node stays dark for a random pause
+    [min_yield_s, max_yield_s] before competing again.  During the pause the
+    child is NOT ticked — it retains _active=True so no spurious on_enter when
+    it resumes.  This prevents lower-priority behaviors from getting only one
+    frame of screen time (the original one-tick bleed-through twitch).
     """
 
-    def __init__(self, child: BTNode, min_s: float, max_s: float) -> None:
+    def __init__(
+        self,
+        child: BTNode,
+        min_s: float,
+        max_s: float,
+        min_yield_s: float = 1.0,
+        max_yield_s: float = 3.0,
+    ) -> None:
         self._child = child
         self._min = min_s
         self._max = max_s
+        self._min_yield = min_yield_s
+        self._max_yield = max_yield_s
         self._budget: float = 0.0
         self._elapsed: float = 0.0
         self._has_budget: bool = False
+        self._yield_remaining: float = 0.0
 
     def tick(self, ctx: "CursorContext", delta_s: float) -> Optional[BTResult]:
+        # During yield pause — stay dark; don't tick child
+        if self._yield_remaining > 0.0:
+            self._yield_remaining = max(0.0, self._yield_remaining - delta_s)
+            return None
+
         result = self._child.tick(ctx, delta_s)
         if result is not None:
             if not self._has_budget:
@@ -121,11 +136,14 @@ class BTRandomDwell(BTNode):
                 self._elapsed = 0.0
                 self._budget = 0.0
                 self._has_budget = False
-                _log.debug("BTRandomDwell: budget expired, yielding")
-                return None  # budget exhausted — let selector re-evaluate next tick
+                self._yield_remaining = random.uniform(self._min_yield, self._max_yield)
+                _log.debug("BTRandomDwell: budget expired, yielding %.1fs",
+                           self._yield_remaining)
+                return None
             return result
-        # Child not active — reset
+        # Child not active — reset everything including any pending pause
         self._elapsed = 0.0
         self._budget = 0.0
         self._has_budget = False
+        self._yield_remaining = 0.0
         return None

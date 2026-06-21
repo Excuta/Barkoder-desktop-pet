@@ -174,7 +174,8 @@ def test_cooldown_no_block_if_never_active():
 def test_random_dwell_holds_child():
     b = make_behavior(enters=True)
     leaf = BTLeaf(b)
-    node = BTRandomDwell(leaf, min_s=2.0, max_s=2.0)  # deterministic: budget=2s
+    # Disable yield pause for this test to isolate budget behaviour
+    node = BTRandomDwell(leaf, min_s=2.0, max_s=2.0, min_yield_s=0.0, max_yield_s=0.0)
 
     # Tick 1 at t=0.0 — budget is set to 2.0, elapsed becomes 1.0
     r1 = node.tick(CTX, 1.0)
@@ -188,12 +189,36 @@ def test_random_dwell_holds_child():
     assert r2 is None
     assert node._has_budget is False
     assert node._elapsed == 0.0
+    assert node._yield_remaining == 0.0  # no pause (disabled in test)
+
+
+def test_random_dwell_yield_pause_blocks_reentry():
+    b = make_behavior(enters=True)
+    leaf = BTLeaf(b)
+    # budget=1s expires immediately, yield pause=2s (deterministic)
+    node = BTRandomDwell(leaf, min_s=1.0, max_s=1.0, min_yield_s=2.0, max_yield_s=2.0)
+
+    r1 = node.tick(CTX, 1.0)   # budget starts AND expires in same tick
+    assert r1 is None           # expired; yield pause begins
+    assert node._yield_remaining == 2.0
+    assert node._has_budget is False
+
+    r2 = node.tick(CTX, 1.0)   # 1s into 2s pause — still dark
+    assert r2 is None
+    assert node._yield_remaining == 1.0
+
+    r3 = node.tick(CTX, 1.0)   # pause drains to 0 this tick
+    assert r3 is None
+    assert node._yield_remaining == 0.0
+
+    r4 = node.tick(CTX, 0.016)  # pause over — child ticked normally again
+    assert r4 is not None
 
 
 def test_random_dwell_resets_on_child_failure():
     b = make_behavior(enters=True)
     leaf = BTLeaf(b)
-    node = BTRandomDwell(leaf, min_s=5.0, max_s=5.0)
+    node = BTRandomDwell(leaf, min_s=5.0, max_s=5.0, min_yield_s=0.0, max_yield_s=0.0)
 
     # Tick once to set budget and accrue elapsed
     node.tick(CTX, 1.0)
@@ -208,3 +233,4 @@ def test_random_dwell_resets_on_child_failure():
     assert result is None
     assert node._has_budget is False
     assert node._elapsed == 0.0
+    assert node._yield_remaining == 0.0
