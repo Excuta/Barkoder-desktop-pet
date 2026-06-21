@@ -1,4 +1,5 @@
 import logging
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -41,6 +42,12 @@ def _detect_taskbar_height(screen) -> int:
 
 
 def run() -> None:
+    # Kill any existing instance so the new exe can replace it cleanly
+    subprocess.run(
+        ["taskkill", "/F", "/IM", "barkoder.exe"],
+        capture_output=True,
+    )
+
     setup_logging(debug="--debug" in sys.argv)
     log = logging.getLogger("barkoder.app")
 

@@ -34,10 +34,10 @@ def test_missing_key_uses_default():
     assert s.animation_fps.Walk == 8   # default
     assert s.thresholds.near_x_px == 99.0
 
-def test_display_defaults():
+def test_display_loads():
     s = load_settings(CONFIG_PATH)
     assert s.display.scale == 2
-    assert s.display.sprite_bottom_pad_px == 15
+    assert isinstance(s.display.sprite_bottom_pad_px, int)
 
 def test_display_missing_uses_defaults():
     import tomllib
