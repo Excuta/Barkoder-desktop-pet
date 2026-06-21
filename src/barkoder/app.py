@@ -23,8 +23,13 @@ from barkoder.tracker import CursorTracker
 from barkoder.window import DogWindow
 
 
-ASSETS_DIR = Path(__file__).parent.parent.parent / "assets"
-CONFIG_PATH = Path(__file__).parent.parent.parent / "config.toml"
+def _resource_dir() -> Path:
+    if hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS)
+    return Path(__file__).parent.parent.parent
+
+ASSETS_DIR = _resource_dir() / "assets"
+CONFIG_PATH = _resource_dir() / "config.toml"
 
 
 def _detect_taskbar_height(screen) -> int:
@@ -53,13 +58,11 @@ def run() -> None:
     audio = AudioController(ASSETS_DIR / "bark.wav")
 
     # System tray
-    tray_icon_path = (
-        ASSETS_DIR
-        / "Create_a_dog_with_running_idle_panting_and_able_to"
-        / "rotations"
-        / "east.png"
-    )
-    tray_icon = QIcon(str(tray_icon_path)) if tray_icon_path.exists() else QIcon()
+    tray_icon_path = ASSETS_DIR / "sitting" / "rotations" / "south.png"
+    if tray_icon_path.exists():
+        tray_icon = QIcon(str(tray_icon_path))
+    else:
+        tray_icon = QIcon()
     startup_mgr = StartupManager("Barkoder")
 
     tray = QSystemTrayIcon(tray_icon, parent=app)
