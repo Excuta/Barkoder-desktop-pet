@@ -261,8 +261,8 @@ def run() -> None:
                 current_anim = ("", "")
             req, delta_x = bt.tick(ctx, delta_s)
 
-        if wander_b.pant_due:
-            wander_b.pant_due = False
+        if wander_b._pant_due:
+            wander_b._pant_due = False
             pant_b.force_pant()
 
         if req.animation == "Run":
