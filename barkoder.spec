@@ -1,18 +1,21 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_data_files
+
 a = Analysis(
     ['src/barkoder/__main__.py'],
-    pathex=[],
+    pathex=['src'],
     binaries=[],
     datas=[
         ('assets', 'assets'),
         ('config.toml', '.'),
     ],
     hiddenimports=[
-        'PyQt6.QtCore', 'PyQt6.QtGui', 'PyQt6.QtWidgets', 'PyQt6.QtMultimedia',
+        'PyQt6.QtCore', 'PyQt6.QtGui', 'PyQt6.QtWidgets',
+        'PyQt6.QtMultimedia', 'PyQt6.sip',
     ],
     hookspath=[],
     runtime_hooks=[],
-    excludes=[],
+    excludes=['tkinter', 'matplotlib', 'numpy'],
     noarchive=False,
 )
 pyz = PYZ(a.pure)
