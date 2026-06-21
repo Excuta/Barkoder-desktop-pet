@@ -262,7 +262,13 @@ def run() -> None:
         if req.animation == "Run":
             bt.add_running_time(delta_s)
 
-        dog_x = max(0.0, min(float(geo.width() - DOG_SIZE), dog_x + delta_x))
+        # Hard wall stop — dog freezes at edge rather than animating in place
+        _max_x = float(geo.width() - DOG_SIZE)
+        if (dog_x <= 0.0 and delta_x < 0) or (dog_x >= _max_x and delta_x > 0):
+            delta_x = 0.0
+            if req.animation in ("Walk", "Run"):
+                req = AnimationRequest("Idle", req.direction, req.y_offset)
+        dog_x = max(0.0, min(_max_x, dog_x + delta_x))
         window.move_to(dog_x, dog_y + req.y_offset)
 
         anim_key = (req.animation, req.direction)
