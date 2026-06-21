@@ -67,26 +67,42 @@ def test_barkwalk_audio_plays_at_start_of_bark():
     mock_audio.play.assert_called_once()
 
 
-def test_barkwalk_audio_plays_again_after_walk_cycle():
-    """Audio should play again at the start of the next bark after walking."""
+def test_barkwalk_exits_after_one_cycle():
+    """After one bark+walk cycle, should_enter returns False so BTCooldown fires."""
     mock_audio = MagicMock()
     b = BarkWalkBehavior(near_x_px=80.0, bark_active_window_s=2.0, audio=mock_audio)
-    b.on_enter(ctx())
+    c = ctx()
+    b.on_enter(c)
 
-    # First bark
-    b.update(ctx())
+    b.update(c)                          # first bark tick — audio plays
     assert mock_audio.play.call_count == 1
 
-    # Finish bark animation
-    b.notify_animation_finished()
+    b.notify_animation_finished()        # bark animation done → walk phase
 
-    # Walk through the walk ticks (3 ticks)
+    for _ in range(3):
+        b.update(ctx(move_direction="east"))  # exhaust walk ticks → _cycle_done = True
+
+    # Cycle complete: should_enter must return False even if cursor is still near
+    assert not b.should_enter(c), "should exit after one cycle so BTCooldown can start"
+    assert mock_audio.play.call_count == 1, "no extra bark during cooldown handoff"
+
+def test_barkwalk_audio_plays_again_on_reentry():
+    """After on_enter is called again (post-cooldown), audio plays for the new bark."""
+    mock_audio = MagicMock()
+    b = BarkWalkBehavior(near_x_px=80.0, bark_active_window_s=2.0, audio=mock_audio)
+    c = ctx()
+
+    # First session
+    b.on_enter(c)
+    b.update(c)
+    b.notify_animation_finished()
     for _ in range(3):
         b.update(ctx(move_direction="east"))
+    b.on_exit(c)   # BTCooldown triggers on_exit, then waits 6s
 
-    # After 3 walk ticks, _barking is set to True. Next update should trigger bark with audio
-    b.update(ctx())
-    # Should be back to barking - audio should play again
+    # Second session (cooldown expired, BT re-enters)
+    b.on_enter(c)
+    b.update(c)
     assert mock_audio.play.call_count == 2
 
 
