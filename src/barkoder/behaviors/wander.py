@@ -21,6 +21,7 @@ class WanderBehavior(Behavior):
         self._speed = walk_speed_px
         self._screen_width = screen_width
         self._dog_size = dog_size
+        self._max_x = float(screen_width - dog_size)
         self._target_x: float | None = None
         self._rest_remaining: float = 0.0
         self._last_direction: str = "east"
@@ -44,23 +45,16 @@ class WanderBehavior(Behavior):
         _log.info("wander exit")
 
     def _pick_target(self, dog_x: float) -> None:
-        margin = 150.0
-        # hi must not exceed the app's clamp boundary (screen_width - dog_size)
-        lo = margin
-        hi = self._screen_width - self._dog_size - margin
+        lo = 0.0
+        hi = self._max_x
 
-        if lo >= hi:
-            # Screen too narrow — fall back to centre
-            lo = float(self._screen_width) * 0.2
-            hi = float(self._screen_width) * 0.8
-
-        # Extra bias away from whichever edge the dog is already near
-        near_left = dog_x < self._screen_width * 0.25
-        near_right = dog_x > self._screen_width * 0.75
+        # Bias toward the opposite side when already near an edge
+        near_left = dog_x < self._max_x * 0.2
+        near_right = dog_x > self._max_x * 0.8
         if near_left:
-            lo = max(lo, self._screen_width * 0.3)
+            lo = self._max_x * 0.3
         elif near_right:
-            hi = min(hi, self._screen_width * 0.7)
+            hi = self._max_x * 0.7
 
         x = random.uniform(lo, hi)
         for _ in range(10):
@@ -75,6 +69,13 @@ class WanderBehavior(Behavior):
     def update(self, ctx: CursorContext) -> tuple[AnimationRequest, float]:
         if self._rest_remaining > 0:
             self._rest_remaining -= 0.016
+            return AnimationRequest("Idle", self._last_direction), 0.0
+
+        # Dog has reached the physical screen edge — turn around
+        at_wall = ctx.dog_x <= 2.0 or ctx.dog_x >= self._max_x - 2.0
+        if at_wall:
+            _log.info("wander: hit screen edge at %.0f, reversing", ctx.dog_x)
+            self._pick_target(ctx.dog_x)
             return AnimationRequest("Idle", self._last_direction), 0.0
 
         if self._target_x is None or abs(ctx.dog_x - self._target_x) < self._speed + 1:
