@@ -38,14 +38,29 @@ class WanderBehavior(Behavior):
 
     def _pick_target(self, dog_x: float) -> None:
         margin = 50.0
-        x = random.uniform(margin, self._screen_width - margin - 68)
+        lo = margin
+        hi = self._screen_width - margin - 68
+
+        # Bias away from edge to prevent wall-hugging
+        near_left = dog_x < 100.0
+        near_right = dog_x > self._screen_width - 100.0 - 68
+        if near_left:
+            lo = max(lo, self._screen_width * 0.2)
+            rest_bonus = random.uniform(0.5, 1.5)
+        elif near_right:
+            hi = min(hi, self._screen_width * 0.8)
+            rest_bonus = random.uniform(0.5, 1.5)
+        else:
+            rest_bonus = 0.0
+
+        x = random.uniform(lo, hi)
         for _ in range(10):
-            candidate = random.uniform(margin, self._screen_width - margin - 68)
+            candidate = random.uniform(lo, hi)
             if abs(candidate - dog_x) >= 150.0:
                 x = candidate
                 break
         self._target_x = x
-        rest = random.uniform(0.5, 2.0)
+        rest = random.uniform(0.5, 2.0) + rest_bonus
         self._rest_remaining = rest
         _log.info("wander target=%.0f rest=%.1fs", x, rest)
 
@@ -54,6 +69,18 @@ class WanderBehavior(Behavior):
         if self._rest_remaining > 0:
             self._rest_remaining -= 0.016
             return AnimationRequest("Idle", self._last_direction), 0.0
+
+        # Detect stuck at actual screen wall — sit and re-pick toward centre
+        at_left_wall = ctx.dog_x < 30.0
+        at_right_wall = ctx.dog_x > self._screen_width - 98.0  # 30 + 68
+        if self._target_x is not None:
+            toward_wall = (at_left_wall and self._target_x < ctx.dog_x) or \
+                          (at_right_wall and self._target_x > ctx.dog_x)
+            if toward_wall:
+                _log.info("wander: hit screen wall, resting and re-picking")
+                self._pick_target(ctx.dog_x)
+                self._rest_remaining += random.uniform(1.0, 2.0)
+                return AnimationRequest("Sit", self._last_direction), 0.0
 
         if self._target_x is None or abs(ctx.dog_x - self._target_x) < self._speed + 1:
             self._pick_target(ctx.dog_x)
