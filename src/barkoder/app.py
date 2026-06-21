@@ -1,4 +1,5 @@
 import logging
+import os
 import subprocess
 import sys
 import time
@@ -41,12 +42,25 @@ def _detect_taskbar_height(screen) -> int:
     return max(0, geo.height() - avail.height())
 
 
-def run() -> None:
-    # Kill any existing instance so the new exe can replace it cleanly
-    subprocess.run(
-        ["taskkill", "/F", "/IM", "barkoder.exe"],
-        capture_output=True,
+def _kill_other_instances() -> None:
+    ps = (
+        Path(os.environ.get("SystemRoot", r"C:\Windows"))
+        / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
     )
+    cmd = (
+        f"Get-Process -Name barkoder -ErrorAction SilentlyContinue"
+        f" | Where-Object {{$_.Id -ne {os.getpid()}}}"
+        f" | Stop-Process -Force"
+    )
+    subprocess.run(
+        [str(ps), "-NonInteractive", "-NoProfile", "-Command", cmd],
+        capture_output=True,
+        creationflags=subprocess.CREATE_NO_WINDOW,
+    )
+
+
+def run() -> None:
+    _kill_other_instances()
 
     setup_logging(debug="--debug" in sys.argv)
     log = logging.getLogger("barkoder.app")
