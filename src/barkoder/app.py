@@ -12,13 +12,14 @@ from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 from barkoder.animation import AnimationPlayer, AssetLoader
 from barkoder.audio import AudioController
 from barkoder.behaviors.idle import IdleBehavior
-from barkoder.behaviors.walk import WalkBehavior
-from barkoder.behaviors.run import RunBehavior
+from barkoder.behaviors.follow import FollowBehavior
 from barkoder.behaviors.pant import PantBehavior
 from barkoder.behaviors.bark_walk import BarkWalkBehavior
 from barkoder.behaviors.wander import WanderBehavior
 from barkoder.behaviors.arrival_sit import ArrivalSitBehavior
 from barkoder.behaviors.idle_sit import IdleSitBehavior
+from barkoder.behaviors.rest import RestBehavior
+from barkoder.behaviors.jump import JumpBehavior
 from barkoder.config import load_settings
 from barkoder.logging_setup import setup_logging
 from barkoder.startup import StartupManager
@@ -145,11 +146,13 @@ def run() -> None:
              th.near_x_px, th.far_x_px, mv.walk_speed_px, mv.run_speed_px,
              th.wander_threshold_s, th.sit_threshold_s)
 
-    run_b = RunBehavior(
-        far_x_px=th.far_x_px, run_speed_px=mv.run_speed_px, sm=None,
+    follow_b = FollowBehavior(
+        near_x_px=th.near_x_px, far_x_px=th.far_x_px,
+        walk_speed_px=mv.walk_speed_px, run_speed_px=mv.run_speed_px,
+        follow_window_s=th.follow_window_s,
         min_run_s=pa.min_run_seconds, max_run_s=pa.max_run_seconds,
+        sm=None,
     )
-    walk_b = WalkBehavior(near_x_px=th.near_x_px, walk_speed_px=mv.walk_speed_px)
     idle_b = IdleBehavior()
     pant_b = PantBehavior(sm=None, min_cycles=pa.min_cycles, max_cycles=pa.max_cycles)
     bark_walk_b = BarkWalkBehavior(near_x_px=th.near_x_px, bark_active_window_s=th.bark_active_window_s, audio=audio)
@@ -163,21 +166,33 @@ def run() -> None:
         sit_hold_seconds=th.sit_hold_seconds,
     )
     idle_sit_b = IdleSitBehavior(sit_threshold_s=th.sit_threshold_s)
+    rest_b = RestBehavior(rest_threshold_s=th.rest_threshold_s)
+    jump_b = JumpBehavior(trigger_chance_per_s=0.05)
+
+    # Synthesize jump animation from existing Sit + Run-north frames
+    for _dir in ("east", "west"):
+        _sit = loader.get_frames("Sit", _dir)
+        _run_up = loader.get_frames("Run", "north")
+        loader.register_synthetic("Jump", _dir, [
+            _sit[0], _run_up[0], _run_up[2], _run_up[4], _sit[0],
+        ])
+
     # Build behavior tree
     arrival_sit_leaf = BTLeaf(arrival_sit_b)
     bt = BehaviorTree(
         BTSelector([
-            BTLeaf(pant_b),
-            BTCooldown(BTLeaf(bark_walk_b), 6.0),
-            arrival_sit_leaf,
-            BTRandomDwell(BTLeaf(run_b), 3.0, 8.0),
-            BTRandomDwell(BTLeaf(walk_b), 3.0, 8.0),
-            BTRandomDwell(BTLeaf(wander_b), 5.0, 10.0),
-            BTRandomDwell(BTLeaf(idle_sit_b), 5.0, 15.0),
-            BTLeaf(idle_b),
+            BTLeaf(pant_b),                                     # 1. exhausted
+            BTCooldown(BTLeaf(bark_walk_b), 6.0),               # 2. greet cursor
+            arrival_sit_leaf,                                   # 3. cursor arrived
+            BTLeaf(follow_b),                                   # 4. chase cursor
+            BTCooldown(BTLeaf(jump_b), 30.0),                   # 5. jump (experimental)
+            BTRandomDwell(BTLeaf(wander_b), 5.0, 10.0),         # 6. wander
+            BTRandomDwell(BTLeaf(idle_sit_b), 5.0, 15.0),       # 7. sit
+            BTRandomDwell(BTLeaf(rest_b), 10.0, 20.0),          # 8. rest
+            BTLeaf(idle_b),                                     # 9. fallback
         ])
     )
-    run_b._sm = bt   # BehaviorTree has same .running_seconds and ._run_threshold attrs
+    follow_b._sm = bt
     pant_b._sm = bt
 
     tracker = CursorTracker(move_threshold_px=th.cursor_move_threshold_px)
@@ -205,7 +220,7 @@ def run() -> None:
         if anim_key != current_anim:
             current_anim = anim_key
             anim_fps = getattr(fps, req.animation, fps.Idle)
-            is_loop = req.animation not in ("Pant", "Bark")
+            is_loop = req.animation not in ("Pant", "Bark", "Jump")
             player.set_animation(
                 loader.get_frames(req.animation, req.direction),
                 fps=float(anim_fps),
@@ -227,6 +242,12 @@ def run() -> None:
             player.reset_finished()
             bark_walk_b.notify_animation_finished()
             current_anim = ("", "")  # force re-evaluation
+
+        # Handle jump animation completion
+        if req.animation == "Jump" and player.is_finished:
+            player.reset_finished()
+            jump_b.notify_animation_finished()
+            current_anim = ("", "")
 
         # Handle arrival-sit hold completion
         if req.animation == "Sit" and arrival_sit_leaf._active:

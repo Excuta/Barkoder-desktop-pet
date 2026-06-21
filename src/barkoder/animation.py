@@ -84,6 +84,19 @@ class AssetLoader:
                         QPixmap_cls(str(assets_dir / rel_path))
                     ]
 
+            # Load laying_down rotation stills as single-frame "Rest" animation
+            if folder == "laying_down":
+                rotations = state["frames"].get("rotations", {})
+                self._frames.setdefault("Rest", {})
+                for direction, rel_path in rotations.items():
+                    self._frames["Rest"][direction] = [
+                        QPixmap_cls(str(assets_dir / rel_path))
+                    ]
+
+    def register_synthetic(self, animation: str, direction: str, frames: list) -> None:
+        """Register a manually assembled frame sequence under a new animation name."""
+        self._frames.setdefault(animation, {})[direction] = list(frames)
+
     def get_frames(self, animation: str, direction: str) -> list:
         key = (animation, direction)
         flat = {(anim, direc) for anim, dirs in self._frames.items() for direc in dirs}

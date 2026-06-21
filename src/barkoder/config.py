@@ -13,6 +13,8 @@ class Thresholds:
     sit_threshold_s: float = 15.0
     sit_hold_seconds: float = 1.5
     cursor_move_threshold_px: float = 5.0
+    follow_window_s: float = 5.0
+    rest_threshold_s: float = 60.0
 
 
 @dataclasses.dataclass(frozen=True)
@@ -37,6 +39,8 @@ class AnimationFps:
     Idle: int = 6
     Pant: int = 10
     Sit: int = 1
+    Rest: int = 1
+    Jump: int = 8
 
 
 @dataclasses.dataclass(frozen=True)
