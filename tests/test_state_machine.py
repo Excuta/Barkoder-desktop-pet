@@ -28,8 +28,8 @@ class MockBehavior(Behavior):
     def should_enter(self, ctx: CursorContext) -> bool:
         return self._enters
 
-    def update(self, ctx: CursorContext) -> AnimationRequest:
-        return AnimationRequest(animation="Idle", direction="east")
+    def update(self, ctx: CursorContext) -> tuple[AnimationRequest, float]:
+        return AnimationRequest(animation="Idle", direction="east"), 0.0
 
     def on_enter(self, ctx: CursorContext) -> None:
         self.entered = True

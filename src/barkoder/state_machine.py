@@ -42,5 +42,5 @@ class StateMachine:
             winner.on_enter(ctx)
             self._current = winner
 
-        req = self._current.update(ctx)
-        return req, 0.0  # delta_x filled in by each behavior's update
+        req, delta_x = self._current.update(ctx)
+        return req, delta_x

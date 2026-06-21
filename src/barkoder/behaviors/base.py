@@ -16,7 +16,7 @@ class Behavior(ABC):
     def should_enter(self, ctx: "CursorContext") -> bool: ...  # noqa: F821
 
     @abstractmethod
-    def update(self, ctx: "CursorContext") -> AnimationRequest: ...  # noqa: F821
+    def update(self, ctx: "CursorContext") -> tuple[AnimationRequest, float]: ...  # noqa: F821
 
     def on_enter(self, ctx: "CursorContext") -> None:
         pass
