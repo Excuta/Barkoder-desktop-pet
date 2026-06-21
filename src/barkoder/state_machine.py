@@ -5,6 +5,8 @@ from barkoder.tracker import CursorContext
 
 class StateMachine:
     def __init__(self, behaviors: list[Behavior]) -> None:
+        if not behaviors:
+            raise ValueError("StateMachine requires at least one Behavior")
         self._behaviors = sorted(behaviors, key=lambda b: b.priority)
         self._current: Behavior | None = None
         self._running_seconds: float = 0.0

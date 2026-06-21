@@ -43,11 +43,13 @@ def test_run_on_exit_resets_running_time():
     sm.reset_running_time.assert_called_once()
 
 
-def test_run_update_adds_running_time():
+def test_run_update_does_not_add_running_time():
+    # Running-time accumulation was moved to app.py (uses real delta_s).
+    # RunBehavior.update() must NOT call add_running_time anymore.
     b, sm = make_run()
     b.on_enter(ctx())
     b.update(ctx(move_direction="east"))
-    sm.add_running_time.assert_called()
+    sm.add_running_time.assert_not_called()
 
 
 def test_run_moves_at_run_speed_east():

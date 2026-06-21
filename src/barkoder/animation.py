@@ -85,6 +85,14 @@ class AssetLoader:
                     ]
 
     def get_frames(self, animation: str, direction: str) -> list:
+        key = (animation, direction)
+        flat = {(anim, direc) for anim, dirs in self._frames.items() for direc in dirs}
+        if key not in flat:
+            available = sorted(flat)
+            raise KeyError(
+                f"No frames found for animation={animation!r}, direction={direction!r}. "
+                f"Available: {available}"
+            )
         return self._frames[animation][direction]
 
     def has_animation(self, animation: str, direction: str) -> bool:

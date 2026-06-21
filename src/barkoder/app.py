@@ -132,6 +132,9 @@ def run() -> None:
                               sm.running_seconds, sm._run_threshold)
         req, delta_x = sm.tick(ctx)
 
+        if req.animation == "Run":
+            sm.add_running_time(delta_s)
+
         dog_x = max(0.0, min(geo.width() - 68.0, dog_x + delta_x))
         window.move_to(dog_x, dog_y)
 

@@ -24,6 +24,7 @@ class DogWindow(QWidget):
         if self._frame is None:
             return
         painter = QPainter(self)
+        painter.fillRect(self.rect(), Qt.GlobalColor.transparent)
         painter.drawPixmap(0, 0, self._frame)
         painter.end()
 

@@ -32,6 +32,5 @@ class RunBehavior(Behavior):
         self._sm.reset_running_time()
 
     def update(self, ctx: CursorContext) -> tuple[AnimationRequest, float]:
-        self._sm.add_running_time(0.016)  # nominal; real delta added by app
         delta = self._speed if ctx.move_direction == "east" else -self._speed
         return AnimationRequest("Run", ctx.move_direction), delta
