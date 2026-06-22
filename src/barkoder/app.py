@@ -67,16 +67,8 @@ def _compute_rest_y_offset(loader, scale: int) -> dict[str, float]:
             offsets[direction] = 0.0
     return offsets
 
-_DEV_ANIMS = [
-    ("Walk east",  ("Walk", "east")),
-    ("Run east",   ("Run",  "east")),
-    ("Run north",  ("Run",  "north")),
-    ("Bark east",  ("Bark", "east")),
-    ("Idle east",  ("Idle", "east")),
-    ("Pant east",  ("Pant", "east")),
-    ("Sit north",  ("Sit",  "north")),
-    ("Rest east",  ("Rest", "east")),
-]
+_ANIM_TYPES = ["Walk", "Run", "Bark", "Idle", "Pant", "Sit", "Rest"]
+_DIR_ORDER  = ["east", "west", "north", "south"]
 
 
 def _detect_taskbar_height(screen) -> int:
@@ -177,12 +169,31 @@ def run() -> None:
 
     dev_anim_menu = menu.addMenu("▶ Trigger Animation")
     dev_anim_menu.setEnabled(False)
-    for label, (anim, direction) in _DEV_ANIMS:
-        act = dev_anim_menu.addAction(label)
-        act.triggered.connect(
-            lambda checked, a=anim, d=direction: trigger_dev_animation(a, d)
-        )
-    dev_toggle.toggled.connect(lambda checked: dev_anim_menu.setEnabled(checked))
+    for anim in _ANIM_TYPES:
+        valid_dirs = [d for d in _DIR_ORDER if loader.has_animation(anim, d)]
+        if not valid_dirs:
+            continue
+        sub = dev_anim_menu.addMenu(anim)
+        for direction in valid_dirs:
+            act = sub.addAction(direction.capitalize())
+            act.triggered.connect(
+                lambda checked, a=anim, d=direction: trigger_dev_animation(a, d)
+            )
+
+    def _on_dev_toggle(checked: bool) -> None:
+        nonlocal _dev_mode_active, _dev_override, current_anim, dog_x
+        _dev_mode_active = checked
+        dev_anim_menu.setEnabled(checked)
+        if checked:
+            _max_x = float(geo.width() - DOG_SIZE)
+            dog_x = max(0.0, min(_max_x, geo.width() / 2.0 - DOG_SIZE / 2.0))
+            window.move_to(dog_x, dog_y)
+            _dev_override = ("Idle", "east")
+            current_anim = ("", "")
+        else:
+            current_anim = ("", "")
+
+    dev_toggle.toggled.connect(_on_dev_toggle)
 
     menu.addSeparator()
     quit_action = menu.addAction("Quit")
@@ -244,28 +255,25 @@ def run() -> None:
     last_tick = time.monotonic()
     fps = settings.animation_fps
     current_anim: tuple[str, str] = ("", "")
-    _dev_override: tuple[str, str] | None = None
-    _dev_override_until: float = 0.0
-    _dev_bark_active: bool = False  # True while a dev-menu bark is playing
+    _dev_mode_active: bool = False
+    _dev_override: tuple[str, str] = ("Idle", "east")
 
     def trigger_dev_animation(anim: str, direction: str) -> None:
-        nonlocal _dev_override, _dev_override_until, current_anim, _dev_bark_active
+        nonlocal _dev_override, current_anim
         _dev_override = (anim, direction)
-        _dev_override_until = time.monotonic() + 1.0
         current_anim = ("", "")
-        _dev_bark_active = (anim == "Bark")
         if anim == "Bark":
             audio.play()
 
     def tick() -> None:
-        nonlocal last_tick, dog_x, current_anim, _dev_override, _dev_bark_active
+        nonlocal last_tick, dog_x, current_anim, _dev_mode_active, _dev_override
         try:
             _tick_body()
         except Exception:
             log.exception("tick error")
 
     def _tick_body() -> None:
-        nonlocal last_tick, dog_x, current_anim, _dev_override, _dev_bark_active
+        nonlocal last_tick, dog_x, current_anim, _dev_mode_active, _dev_override
         now = time.monotonic()
         delta_s = min(now - last_tick, 0.1)
         last_tick = now
@@ -273,17 +281,13 @@ def run() -> None:
         ctx = tracker.compute(dog_x, dog_y, delta_s,
                               bt.running_seconds, bt._run_threshold)
 
-        if _dev_override and now < _dev_override_until:
+        if _dev_mode_active:
             req = AnimationRequest(*_dev_override)
             delta_x = 0.0
         else:
-            if _dev_override:
-                _dev_override = None
-                _dev_bark_active = False
-                current_anim = ("", "")
             req, delta_x = bt.tick(ctx, delta_s)
 
-        if wander_b._pant_due:
+        if not _dev_mode_active and wander_b._pant_due:
             wander_b._pant_due = False
             pant_b.force_pant()
 
@@ -322,15 +326,20 @@ def run() -> None:
         # Handle pant animation cycle completion
         if req.animation == "Pant" and player.is_finished:
             player.reset_finished()
-            pant_b.notify_animation_finished()
-            current_anim = ("", "")  # always restart so next cycle plays from frame 0
+            if not _dev_mode_active:
+                pant_b.notify_animation_finished()
+            else:
+                _dev_override = ("Idle", "east")
+            current_anim = ("", "")
 
         # Handle bark animation cycle completion
         if req.animation == "Bark" and player.is_finished:
             player.reset_finished()
-            if not _dev_bark_active:
+            if not _dev_mode_active:
                 bark_walk_b.notify_animation_finished()
-            current_anim = ("", "")  # force re-evaluation
+            else:
+                _dev_override = ("Idle", "east")
+            current_anim = ("", "")
 
         # Handle arrival-sit hold completion.
         if (req.animation == "Sit"
