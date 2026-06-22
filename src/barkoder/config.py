@@ -41,7 +41,6 @@ class AnimationFps:
     Pant: int = 10
     Sit: int = 1
     Rest: int = 1
-    Jump: int = 8
 
 
 @dataclasses.dataclass(frozen=True)

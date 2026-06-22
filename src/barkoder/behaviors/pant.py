@@ -25,6 +25,7 @@ class PantBehavior(Behavior):
 
     def force_pant(self) -> None:
         self._forced = True
+        self._interval_remaining = 0.0
 
     def should_enter(self, ctx: CursorContext) -> bool:
         if self._done:

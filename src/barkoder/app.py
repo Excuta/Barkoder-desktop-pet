@@ -20,7 +20,6 @@ from barkoder.behaviors.wander import WanderBehavior
 from barkoder.behaviors.arrival_sit import ArrivalSitBehavior
 from barkoder.behaviors.idle_sit import IdleSitBehavior
 from barkoder.behaviors.rest import RestBehavior
-from barkoder.behaviors.jump import JumpBehavior
 from barkoder.config import load_settings
 from barkoder.logging_setup import setup_logging
 from barkoder.startup import StartupManager
@@ -198,7 +197,6 @@ def run() -> None:
     )
     idle_sit_b = IdleSitBehavior(sit_threshold_s=th.sit_threshold_s)
     rest_b = RestBehavior(rest_threshold_s=th.rest_threshold_s)
-    jump_b = JumpBehavior()
     pant_b = PantBehavior(pant_cycles_required=pa.pant_cycles_required)
 
     # Build behavior tree
@@ -207,13 +205,12 @@ def run() -> None:
         BTSelector([
             BTLeaf(pant_b),                                     # 1. periodic pant
             BTCooldown(BTLeaf(bark_walk_b), 12.0),               # 2. greet cursor (once per 6 s)
-            BTCooldown(BTLeaf(jump_b), 45.0),                   # 3. jump (45s cooldown between jumps)
-            arrival_sit_leaf,                                   # 4. cursor arrived
-            BTLeaf(follow_b),                                   # 5. chase cursor
-            BTLeaf(wander_b),                                   # 6. wander — runs uninterrupted
-            BTRandomDwell(BTLeaf(idle_sit_b), 5.0, 15.0),       # 7. sit
-            BTRandomDwell(BTLeaf(rest_b), 10.0, 20.0),          # 8. rest
-            BTLeaf(idle_b),                                     # 9. fallback
+            arrival_sit_leaf,                                   # 3. cursor arrived
+            BTLeaf(follow_b),                                   # 4. chase cursor
+            BTLeaf(wander_b),                                   # 5. wander — runs uninterrupted
+            BTRandomDwell(BTLeaf(idle_sit_b), 5.0, 15.0),       # 6. sit
+            BTRandomDwell(BTLeaf(rest_b), 10.0, 20.0),          # 7. rest
+            BTLeaf(idle_b),                                     # 8. fallback
         ])
     )
     follow_b._sm = bt
@@ -267,6 +264,9 @@ def run() -> None:
 
         if req.animation == "Run":
             bt.add_running_time(delta_s)
+            if bt.running_seconds >= bt._run_threshold:
+                bt.reset_running_time()
+                pant_b.force_pant()
 
         # Hard wall stop — dog freezes at edge rather than animating in place
         _max_x = float(geo.width() - DOG_SIZE)
@@ -281,14 +281,14 @@ def run() -> None:
         if anim_key != current_anim:
             current_anim = anim_key
             anim_fps = getattr(fps, req.animation, fps.Idle)
-            is_loop = req.animation not in ("Pant", "Bark", "Jump")
+            is_loop = req.animation not in ("Pant", "Bark")
             try:
                 frames = loader.get_frames(req.animation, req.direction)
             except KeyError:
                 log.error("missing animation frames: %s/%s", req.animation, req.direction)
                 frames = loader.get_frames("Idle", "east")
                 anim_fps = fps.Idle
-                # Keep is_loop unchanged: non-looping anims (Jump/Pant/Bark) need
+                # Keep is_loop unchanged: non-looping anims (Pant/Bark) need
                 # is_finished to fire so completion handlers can deactivate them.
             player.set_animation(frames, fps=float(anim_fps), loop=is_loop)
 
@@ -299,12 +299,6 @@ def run() -> None:
             player.reset_finished()
             pant_b.notify_animation_finished()
             current_anim = ("", "")  # always restart so next cycle plays from frame 0
-
-        # Handle jump animation completion
-        if req.animation == "Jump" and player.is_finished:
-            player.reset_finished()
-            jump_b.notify_animation_finished()
-            current_anim = ("", "")
 
         # Handle bark animation cycle completion
         if req.animation == "Bark" and player.is_finished:
