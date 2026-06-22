@@ -5,9 +5,10 @@ from barkoder.tracker import CursorContext
 class RestBehavior(Behavior):
     name = "rest"
 
-    def __init__(self, rest_threshold_s: float) -> None:
+    def __init__(self, rest_threshold_s: float, y_offset: float = 0.0) -> None:
         self._threshold = rest_threshold_s
         self._direction = "east"
+        self._y_offset = y_offset
 
     def should_enter(self, ctx: CursorContext) -> bool:
         return ctx.cursor_idle_seconds > self._threshold
@@ -16,4 +17,4 @@ class RestBehavior(Behavior):
         self._direction = ctx.bark_direction_4
 
     def update(self, ctx: CursorContext) -> tuple[AnimationRequest, float]:
-        return AnimationRequest("Rest", self._direction), 0.0
+        return AnimationRequest("Rest", self._direction, self._y_offset), 0.0

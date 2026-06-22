@@ -45,6 +45,25 @@ def _config_path() -> Path:
 ASSETS_DIR = _resource_dir() / "assets"
 CONFIG_PATH = _config_path()
 
+
+def _sprite_content_bottom(pixmap) -> int:
+    from PyQt6.QtGui import QImage
+    img = pixmap.toImage().convertToFormat(QImage.Format.Format_ARGB32)
+    for row in range(img.height() - 1, -1, -1):
+        for col in range(img.width()):
+            if (img.pixel(col, row) >> 24) & 0xFF > 10:
+                return row
+    return img.height() - 1
+
+
+def _compute_rest_y_offset(loader, scale: int) -> float:
+    try:
+        idle_bottom = _sprite_content_bottom(loader.get_frames("Idle", "east")[0])
+        rest_bottom = _sprite_content_bottom(loader.get_frames("Rest", "east")[0])
+        return max(0.0, float((idle_bottom - rest_bottom) * scale))
+    except Exception:
+        return 0.0
+
 _DEV_ANIMS = [
     ("Walk east",  ("Walk", "east")),
     ("Run east",   ("Run",  "east")),
@@ -103,6 +122,8 @@ def run() -> None:
              geo.width(), geo.height(), avail.y(), DOG_SIZE, dog_y, pad_scaled)
 
     loader = AssetLoader(ASSETS_DIR)
+    rest_y_offset = _compute_rest_y_offset(loader, disp.scale)
+    log.info("rest_y_offset=%.0fpx", rest_y_offset)
     player = AnimationPlayer()
     window = DogWindow()
     dog_x = float(geo.width() // 2 - DOG_SIZE // 2)
@@ -190,13 +211,14 @@ def run() -> None:
         dog_size=int(DOG_SIZE),
         run_speed_px=mv.run_speed_px,
         pant_cycles_required=pa.pant_cycles_required,
+        rest_y_offset=rest_y_offset,
     )
     arrival_sit_b = ArrivalSitBehavior(
         arrival_x_px=th.arrival_x_px,
         sit_hold_seconds=th.sit_hold_seconds,
     )
     idle_sit_b = IdleSitBehavior(sit_threshold_s=th.sit_threshold_s)
-    rest_b = RestBehavior(rest_threshold_s=th.rest_threshold_s)
+    rest_b = RestBehavior(rest_threshold_s=th.rest_threshold_s, y_offset=rest_y_offset)
     pant_b = PantBehavior(pant_cycles_required=pa.pant_cycles_required)
 
     # Build behavior tree

@@ -29,12 +29,14 @@ class WanderBehavior(Behavior):
         dog_size: int = 68,
         run_speed_px: float = 6.0,
         pant_cycles_required: int = 2,
+        rest_y_offset: float = 0.0,
     ) -> None:
         self._threshold = wander_threshold_s
         self._speed = walk_speed_px
         self._run_speed = run_speed_px
         self._max_x = float(screen_width - dog_size)
         self._pant_cycles_required = pant_cycles_required
+        self._rest_y_offset = rest_y_offset
         self._target_x: float | None = None
         self._last_direction: str = "east"
         self._force_active: bool = False
@@ -105,7 +107,7 @@ class WanderBehavior(Behavior):
             self._enter_phase(_NEXT[self._state])
 
         if self._state == _LAY:
-            return AnimationRequest("Rest", self._last_direction), 0.0
+            return AnimationRequest("Rest", self._last_direction, self._rest_y_offset), 0.0
         if self._state in (_SIT, _POST_LAY):
             return AnimationRequest("Sit", self._last_direction), 0.0
 
