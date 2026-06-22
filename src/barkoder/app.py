@@ -56,13 +56,16 @@ def _sprite_content_bottom(pixmap) -> int:
     return img.height() - 1
 
 
-def _compute_rest_y_offset(loader, scale: int) -> float:
-    try:
-        idle_bottom = _sprite_content_bottom(loader.get_frames("Idle", "east")[0])
-        rest_bottom = _sprite_content_bottom(loader.get_frames("Rest", "east")[0])
-        return max(0.0, float((idle_bottom - rest_bottom) * scale))
-    except Exception:
-        return 0.0
+def _compute_rest_y_offset(loader, scale: int) -> dict[str, float]:
+    offsets: dict[str, float] = {}
+    for direction in ("east", "west", "north", "south"):
+        try:
+            idle_bottom = _sprite_content_bottom(loader.get_frames("Idle", direction)[0])
+            rest_bottom = _sprite_content_bottom(loader.get_frames("Rest", direction)[0])
+            offsets[direction] = max(0.0, float((idle_bottom - rest_bottom) * scale))
+        except Exception:
+            offsets[direction] = 0.0
+    return offsets
 
 _DEV_ANIMS = [
     ("Walk east",  ("Walk", "east")),
@@ -123,7 +126,7 @@ def run() -> None:
 
     loader = AssetLoader(ASSETS_DIR)
     rest_y_offset = _compute_rest_y_offset(loader, disp.scale)
-    log.info("rest_y_offset=%.0fpx", rest_y_offset)
+    log.info("rest_y_offset=%s", {d: f"{v:.0f}px" for d, v in rest_y_offset.items()})
     player = AnimationPlayer()
     window = DogWindow()
     dog_x = float(geo.width() // 2 - DOG_SIZE // 2)
