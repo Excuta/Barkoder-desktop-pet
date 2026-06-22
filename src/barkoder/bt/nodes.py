@@ -46,7 +46,7 @@ class BTLeaf(BTNode):
                 self._active = False
             return None
         if not self._active:
-            _log.debug("BTLeaf enter: %s", self._b.name)
+            _log.debug("[bt:enter] %s", self._b.name)
             self._b.on_enter(ctx)
             self._active = True
         req, dx = self._b.update(ctx)
@@ -87,7 +87,7 @@ class BTCooldown(BTNode):
             # Child just exited — start cooldown
             self._remaining = self._cooldown_s
             self._was_active = False
-            _log.info("BTCooldown: %.1fs started", self._cooldown_s)
+            _log.info("[bt:cooldown] %.1fs started", self._cooldown_s)
         return result
 
 

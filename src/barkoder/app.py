@@ -207,7 +207,7 @@ def run() -> None:
         BTSelector([
             BTLeaf(pant_b),                                     # 1. periodic pant
             BTCooldown(BTLeaf(bark_walk_b), 12.0),               # 2. greet cursor (once per 6 s)
-            BTLeaf(jump_b),                                     # 3. jump on arrival (self-managed)
+            BTCooldown(BTLeaf(jump_b), 45.0),                   # 3. jump (45s cooldown between jumps)
             arrival_sit_leaf,                                   # 4. cursor arrived
             BTLeaf(follow_b),                                   # 5. chase cursor
             BTLeaf(wander_b),                                   # 6. wander — runs uninterrupted

@@ -38,14 +38,14 @@ class WanderBehavior(Behavior):
         self._target_x: float | None = None
         self._last_direction: str = "east"
         self._force_active: bool = False
-        self._state: str = _WALK
+        self._state: str = _POST_LAY  # non-movement so first on_enter doesn't count as phase
         self._phase_timer: float = 0.0
         self._activity_phases: int = 0
         self._pant_due: bool = False
 
     def force_start(self) -> None:
         self._force_active = True
-        _log.info("force_start: dog loses interest, wanders away")
+        _log.info("[wander:enter] force_start — dog loses interest")
 
     def should_enter(self, ctx: CursorContext) -> bool:
         return self._force_active or ctx.cursor_idle_seconds > self._threshold
@@ -54,6 +54,7 @@ class WanderBehavior(Behavior):
         self._target_x = None
         self._activity_phases = 0
         self._pant_due = False
+        _log.info("[wander:enter] starting cycle")
         self._enter_phase(_WALK)
 
     def on_exit(self, ctx: CursorContext) -> None:
@@ -61,19 +62,22 @@ class WanderBehavior(Behavior):
         self._target_x = None
         self._activity_phases = 0
         self._pant_due = False
-        _log.info("wander exit")
+        _log.info("[wander:exit] state=%s remaining=%.1fs", self._state, self._phase_timer)
 
     def _enter_phase(self, phase: str) -> None:
-        if self._state in (_WALK, _RUN):
+        old_state = self._state
+        if old_state in (_WALK, _RUN):
             self._activity_phases += 1
             if self._activity_phases >= self._pant_cycles_required:
                 self._pant_due = True
                 self._activity_phases = 0
+                _log.info("[wander:pant] %d phases done → signaling pant",
+                          self._pant_cycles_required)
         self._state = phase
         self._phase_timer = random.uniform(*_DURATIONS[phase])
         if phase in (_SIT, _LAY, _POST_LAY):
             self._target_x = None
-        _log.info("wander: → %s (%.1fs)", phase, self._phase_timer)
+        _log.info("[wander:phase] %s → %s (%.1fs)", old_state, phase, self._phase_timer)
 
     def _pick_target(self, dog_x: float) -> None:
         lo = 0.0
@@ -92,7 +96,7 @@ class WanderBehavior(Behavior):
                 x = candidate
                 break
         self._target_x = x
-        _log.debug("wander: target=%.0f", x)
+        _log.debug("[wander:move] target=%.0f", x)
 
     def update(self, ctx: CursorContext) -> tuple[AnimationRequest, float]:
         dt = 0.016
@@ -112,7 +116,11 @@ class WanderBehavior(Behavior):
         at_wall = ctx.dog_x <= 2.0 or ctx.dog_x >= self._max_x - 2.0
         if at_wall:
             self._pick_target(ctx.dog_x)
-            return AnimationRequest(anim, self._last_direction), 0.0
+            direction = "east" if self._target_x > ctx.dog_x else "west"
+            self._last_direction = direction
+            _log.debug("[wander:wall] dog_x=%.0f reversed to %s", ctx.dog_x, direction)
+            delta = speed if direction == "east" else -speed
+            return AnimationRequest(anim, direction), delta
 
         if self._target_x is None or abs(ctx.dog_x - self._target_x) < speed + 1:
             self._pick_target(ctx.dog_x)

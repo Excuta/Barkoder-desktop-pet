@@ -29,7 +29,8 @@ class JumpBehavior(Behavior):
     def on_enter(self, ctx: CursorContext) -> None:
         self._active = True
         self._direction = ctx.move_direction
-        _log.debug("jump: triggered")
+        _log.debug("[jump:trigger] idle=%.1fs dist=%.0fpx dir=%s",
+                   ctx.cursor_idle_seconds, ctx.horizontal_distance, self._direction)
 
     def on_exit(self, ctx: CursorContext) -> None:
         self._active = False
@@ -39,4 +40,4 @@ class JumpBehavior(Behavior):
 
     def notify_animation_finished(self) -> None:
         self._active = False
-        _log.debug("jump: finished")
+        _log.debug("[jump:done]")

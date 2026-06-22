@@ -1,6 +1,9 @@
+import logging
 import random
 from barkoder.behaviors.base import Behavior, AnimationRequest
 from barkoder.tracker import CursorContext
+
+_log = logging.getLogger("barkoder.pant")
 
 
 class PantBehavior(Behavior):
@@ -37,6 +40,7 @@ class PantBehavior(Behavior):
         self._direction = ctx.move_direction
         self._cycles_done = 0
         self._target_cycles = random.randint(self._MIN_CYCLES, self._MAX_CYCLES)
+        _log.debug("[pant:start] target=%d cycles", self._target_cycles)
 
     def on_exit(self, ctx: CursorContext) -> None:
         self._done = False
@@ -49,3 +53,6 @@ class PantBehavior(Behavior):
         self._cycles_done += 1
         if self._cycles_done >= self._target_cycles:
             self._done = True
+            _log.debug("[pant:done] %d cycles", self._cycles_done)
+        else:
+            _log.debug("[pant:cycle] %d/%d", self._cycles_done, self._target_cycles)
